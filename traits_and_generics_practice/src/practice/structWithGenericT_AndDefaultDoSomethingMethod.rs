@@ -1,0 +1,1 @@
+/*i was thinking of creating a struct that holds a generic type and has a default implementation for printing the value if it's a string or a number (the number part with the help of "if the value has trait") or something like that. otherwise requires an custom implementation you have to make yourself. that's just the first idea i had*/
