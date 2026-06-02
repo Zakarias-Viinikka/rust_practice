@@ -1,3 +1,0 @@
-/*Your method gets some input (like a string). It doesn't care what type it's supposed to turn into — it just tries to convert the input using whatever T is asking for. If T is a number, it tries to make it a number. If T is a yes/no, it tries to make it a yes/no. If the input doesn't make sense for that type (like trying to turn "hello" into a number), you get an error back wrapped in your custom error type. Otherwise you get the value.
-
-The method returns a Result<T, YourErrorType>. Whatever calls the method then decides what to do with that — print the value, handle the error, pass it along, etc.*/

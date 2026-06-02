@@ -2,5 +2,7 @@
 name = "traits_and_generics_practice"
 version = "0.1.0"
 edition = "2024"
+default-run = "structWithGenericT_AndDefaultDoSomethingMethod"
 
 [dependencies]
+num-traits = "0.2.19"

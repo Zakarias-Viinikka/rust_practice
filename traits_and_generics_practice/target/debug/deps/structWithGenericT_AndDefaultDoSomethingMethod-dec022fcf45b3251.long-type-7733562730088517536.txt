@@ -1,0 +1,1 @@
+structWithGenericT_AndDefaultDoSomethingMethod::Struct<{integer}>
