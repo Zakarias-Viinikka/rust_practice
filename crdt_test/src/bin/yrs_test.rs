@@ -4,34 +4,66 @@
 #[path = "../boss_of_yrs.rs"]
 mod boss_of_yrs;
 use boss_of_yrs::BossOfYrs;
+use serde_json::json;
+use yrs::StateVector;
+use yrs::types::ToJson;
 use yrs::updates::decoder::Decode;
 use yrs::updates::encoder::Encode;
 use yrs::{Doc, GetString, ReadTxn, Text, Transact, Update};
-
 /*
  * using this as a reference for figuring out this yrs stuff
  * https://docs.rs/yrs/latest/yrs/#quick-start
  */
 
 fn main() {
-    //the doc is the thing in which i need to 'save' the information. idk exactly the details but any changes i make i need to apply to doc and then if im in a hypothethical scenario trying to sync from two different computers or whatever. the doc i'm storing is where i would "push" the changes to and then read from if i wanted to.
     let boss_of_yrs = BossOfYrs::new();
     let doc = &boss_of_yrs.doc;
 
-    //creates a text block(? i think) with the "id" article if it doesn't exist.
-    let text = doc.get_or_insert_text("article");
+    let remote_doc = BossOfYrs::new();
+
+    let text = vec![
+        boss_of_yrs.doc.get_or_insert_text("block1"),
+        boss_of_yrs.doc.get_or_insert_text("block2"),
+    ];
 
     {
-        //ok from what i can tell. this is just what u need to do if u wanna begin editing the doc. like it doesn't edit it. it's just what u need to do if u wanna do it
-        let mut txn = doc.transact_mut();
+        let mut txn = boss_of_yrs.doc.transact_mut();
 
-        //it says at index 0 put hello and at index 5 put world
-        //
-        // so if notion was using this library. the way they're handling it is that wherever u put ur mouse. like where u click. is where u start "putting stuff at index blabla"
-        text.insert(&mut txn, 0, "hello");
-        text.insert(&mut txn, 5, " world");
+        text[0].insert(&mut txn, 0, "hello");
+        text[0].insert(&mut txn, 5, " world");
+
+        text[1].insert(&mut txn, 0, "bye");
+        text[1].insert(&mut txn, 5, " jupiter");
+
+        /* */
+
+        {
+            let mut remote_txn = remote_doc.doc.transact_mut();
+            //stores info about what changes the remote document has and turns into a format that is cheaper to transmit over the network for example.
+            let state_vector = remote_txn.state_vector().encode_v1();
+            let update = txn.encode_diff_v1(&StateVector::decode_v1(&state_vector).unwrap());
+            remote_txn.apply_update(Update::decode_v1(update.as_slice()).unwrap());
+        }
+
+        {
+            let map = remote_doc.doc.transact();
+            let map = map.root_refs();
+
+            println!(
+                "{:?}",
+                map.into_iter().map(|(k, v)| k).collect::<Vec<&str>>()
+            );
+            //println!("{}", text[0].get_string(&boss_of_yrs.doc.transact()));
+        }
     }
 
-    //text.get_string(&doc.transact())
-    println!("{}", text.get_string(&doc.transact()));
+    //i can't use transact on the remote txn in the same scope because the transact mut hostages it for some reason
+
+    //println!("{}", text[0].get_string(&remote_doc.doc.transact()));
+    //println!("{}", text[1].get_string(&remote_doc.doc.transact()));
+
+    //println!("{}", text[0].get_string(&boss_of_yrs.doc.transact()));
+    //println!("{}", text[1].get_string(&boss_of_yrs.doc.transact()));
+    //println!("{}", serde_json::to_string_pretty(&map).unwrap());
+    println!("test");
 }

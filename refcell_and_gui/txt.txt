@@ -5,3 +5,8 @@ Draw it on a canvas.
 Implement the graph using the Rc<RefCell<Node>> pattern (each node holds Rc pointers to its neighbors).
 
 After running your reachability algorithm (like BFS within 2 steps), visualize which nodes are reachable on the canvas.
+
+
+https://docs.rs/iced/latest/iced/#the-pocket-guide
+
+https://book.iced.rs/additional-resources.html
