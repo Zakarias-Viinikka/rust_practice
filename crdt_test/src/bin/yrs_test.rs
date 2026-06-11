@@ -8,8 +8,8 @@ use boss_of_yrs::BossOfYrs;
 #[path = "../params/yrs_params.rs"]
 mod yrs_params;
 use yrs_params::*;*/
-mod yrs_stuff;
-use crate::yrs_stuff::boss_of_yrs::*;
+
+use crdt_test::yrs_stuff::boss_of_yrs::*;
 
 /*use serde_json::json;
 use std::sync::Arc;
@@ -24,11 +24,11 @@ use yrs::{StateVector, Transaction};*/
 
 fn main() {
     let boss_of_yrs = BossOfYrs::new();
-    let doc = &boss_of_yrs.doc;
 
-    let data_blocks = doc.get_or_insert_array("text_blocks");
-
-    {
+    let example_data1 = "mock data".to_string();
+    let example_meta_data1 = "type_of_content: title,".to_string();
+    boss_of_yrs.insert_new_block(example_data1, example_meta_data1);
+    /*{
         /*
         * InsertNewBlockParams<'a> {
             doc: &'a Doc,
@@ -41,5 +41,5 @@ fn main() {
 
         let arrayLen = text_blocks.len(&txn);
         text_blocks.insert(&mut txn, arrayLen, block);
-    }
+    }*/
 }
