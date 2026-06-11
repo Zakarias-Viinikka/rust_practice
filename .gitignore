@@ -3,3 +3,5 @@ refcell_and_gui/target/
 crdt_test/target/
 cli_test_program/target/
 cargo_project_structure_test/target/
+
+**/target
