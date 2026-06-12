@@ -1,0 +1,1 @@
+going to try to make a simple program where i can select a file from my computer and then my program adds some kind of key, value field to the metadata that is for storing how much i should lower or increase the volume when the audio plays for a future program i'm making
