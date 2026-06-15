@@ -1,0 +1,1 @@
+This means that {count} and {count.get()} do very different things in your view. {count} passes in a signal, telling the framework to update the view every time count changes. {count.get()} accesses the value of count once, and passes an i32 into the view, rendering it once, unreactively.
