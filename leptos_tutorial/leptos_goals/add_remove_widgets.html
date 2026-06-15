@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Move</title>
+
+        <style>
+            body {
+                display: flex;
+                justify-content: center; /* horizontal */
+                align-items: center; /* vertical */
+                height: 100vh;
+                margin: 0;
+                box-shadow: inset 0 0 0 10px lightseagreen;
+            }
+            #container {
+                box-shadow: inset 0 0 0 5px slategray;
+                padding: 15px;
+                width: fit-content;
+                margin: auto;
+            }
+
+            .fake-link {
+                color: blue;
+                text-decoration: underline;
+                cursor: pointer;
+            }
+            .fake-link:hover {
+                color: darkred;
+            }
+        </style>
+    </head>
+    <body>
+        /* my 4th thing i wanna do is moving widgets in leptos. idk if that's
+        the right terminology. but in js the equivalent would be creating custom
+        divs with maybe custom stuff inside of them. and then being able to move
+        them. aka removing them and adding them somewhere else.*/
+        <div id="container">
+            <h1 id="website_name">Page X</h1>
+            <a class="fake-link" onclick="set_page_1()">link 1</a><br />
+            <a class="fake-link" onclick="set_page_2()">link 2</a><br />
+            <a class="fake-link" onclick="set_page_3()">link 3</a><br />
+        </div>
+        <script>
+            function set_page_1() {
+                document.getElementById("website_name").innerText = "Page 1";
+            }
+            function set_page_2() {
+                document.getElementById("website_name").innerText = "Page 2";
+            }
+            function set_page_3() {
+                document.getElementById("website_name").innerText = "Page 3";
+            }
+        </script>
+    </body>
+</html>
