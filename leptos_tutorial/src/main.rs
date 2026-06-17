@@ -1,7 +1,8 @@
-use leptos::ev::SubmitEvent;
-use leptos::html;
+//use leptos::ev::SubmitEvent;
+//use leptos::html;
 use leptos::prelude::*;
-use leptos::tachys::view;
+use leptos_router::components::{Route, Router, Routes};
+use leptos_router::*; // <- my code didn't work without this. the path! macro specifically
 
 fn main() {
     console_error_panic_hook::set_once();
@@ -13,31 +14,36 @@ fn main() {
 #[component]
 fn App() -> impl IntoView {
     view! {
+      <Router>
+        <nav>
+          /* ... */
+        </nav>
+        <main>
+            // all our routes will appear inside <main>
+            <Routes fallback=|| "Not found.">
+                <Route path=path!("/") view=DefaultPage/>
+                <Route path=path!("/page1") view=Page1/>
+                <Route path=path!("/page2") view=Page2/>
+            </Routes>
+        </main>
+      </Router>
+    }
+}
 
+#[component]
+fn DefaultPage() -> impl IntoView {
+    view! {
         <br /><br /><br /><br /><br />
         <div id="container">
-            <Page1/>
-            <Page2/>
-        </div>
-    }
-}
-
-#[component]
-fn Component1() -> impl IntoView {
-    view! {
-        <div>
-            "this is component 1."
-            <br /><br />
-
-        </div>
-    }
-}
-#[component]
-fn Component2() -> impl IntoView {
-    view! {
-        <div>
-            "this is component 2."
-            <br /><br />
+            "Default Page"
+            <br/>
+            //I don't understand what <A> is about? my code didn't work when I did <A href... instead of <a href...
+            //
+            // From the book:
+            // <A> Correctly resolves relative nested routes. Relative routing with ordinary <a> tags can be tricky. For example, if you have a route like /post/:id, <A href="1"> will generate the correct relative route, but <a href="1"> likely will not (depending on where it appears in your view.) <A/> resolves routes relative to the path of the nested route within which it appears.
+            <a href="page1">"Page 1"</a>
+            <br/>
+            <a href="page2">"Page 2"</a>
         </div>
     }
 }
@@ -45,59 +51,19 @@ fn Component2() -> impl IntoView {
 #[component]
 fn Page1() -> impl IntoView {
     view! {
-        <Component1/>
-        <Component2/>
+        <br /><br /><br /><br /><br />
+        <div id="container">
+            "Page 1"
+        </div>
     }
 }
 
 #[component]
 fn Page2() -> impl IntoView {
     view! {
-        <Component3
-            comp3_variable ="hello".to_string()
-        />
-        <Component4
-            variable1 = "good".to_string()
-            variable2 = "bye".to_string()
-        />
-    }
-}
-
-#[component]
-fn Component3(#[prop(optional)] comp3_variable: Option<String>) -> impl IntoView {
-    view! {
-        <div>
-            "this is component 1 for page 2."
-            <br />
-            //is there a way to avoid clone?
-            // ---
-            // it's because im passing in a value and not a signal. signals let me reuse without cloning I think?
-            "this is the optional value that belongs: {" {comp3_variable.clone()} "}"
-            <br />
-            {
-                if comp3_variable.is_some() {
-                    Some(
-                        view! {
-                            <div>"Text that only shows if the optional value was included."</div>
-                        }
-                    )
-                } else {None}
-            }
-            <br /><br />
-
-        </div>
-    }
-}
-#[component]
-fn Component4(#[prop(optional)] variable1: String, variable2: String) -> impl IntoView {
-    view! {
-        <div>
-            "this is component 2 for page 2."
-            <br />
-            "this is the optional value that belongs: {" {variable1} "}"
-            <br />
-            "this is the second value that belongs: {" {variable2} "}"
-            <br /><br />
+        <br /><br /><br /><br /><br />
+        <div id="container">
+            "Page 2"
         </div>
     }
 }
