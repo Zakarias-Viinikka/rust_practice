@@ -1,0 +1,6 @@
+I don't know how but i found the leptos_use crate?
+
+after that I felt a bit lost. but then i just coped the entire side menu with all the titles and i pasted it into a chat ai and asked "does any of this look like it's used for giving me access to the users mic."
+
+and so i went to look at:
+use_user_media //https://leptos-use.rs/browser/use_user_media.html
