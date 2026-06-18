@@ -1,0 +1,12 @@
+[package]
+name = "browser_audio_visualizer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.8.19", features = ["csr"] }
+leptos-use = { version = "0.18.3", features = ["use_permission"] }
+leptos_router = "0.8.13"
+wasm-bindgen = "0.2.125"
+web-sys = { version = "0.3.102", features = ["Permissions", "PermissionStatus", "PermissionName", "MediaDevices", "MediaStreamConstraints"] }

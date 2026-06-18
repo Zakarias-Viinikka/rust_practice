@@ -1,0 +1,3 @@
+cargo add wasm-bindgen
+cargo add web-sys --features Permissions,PermissionStatus,PermissionName,MediaDevices,MediaStreamConstraints
+cargo add leptos_use --features use_permission
