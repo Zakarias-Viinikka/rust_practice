@@ -1,13 +1,17 @@
 //use leptos::ev::SubmitEvent;
 //use leptos::html;
 use leptos::prelude::*;
+use leptos_router::components::A;
 use leptos_router::components::{Route, Router, Routes};
 use leptos_router::*; // <- my code didn't work without this. the path! macro specifically
+use leptos_tutorial::{page1::*, page2::*};
+/*
+use leptos_tutorial::routing_test;
+*/
 
 fn main() {
     console_error_panic_hook::set_once();
     //  trunk serve --open
-
     mount_to_body(App);
 }
 
@@ -37,33 +41,9 @@ fn DefaultPage() -> impl IntoView {
         <div id="container">
             "Default Page"
             <br/>
-            //I don't understand what <A> is about? my code didn't work when I did <A href... instead of <a href...
-            //
-            // From the book:
-            // <A> Correctly resolves relative nested routes. Relative routing with ordinary <a> tags can be tricky. For example, if you have a route like /post/:id, <A href="1"> will generate the correct relative route, but <a href="1"> likely will not (depending on where it appears in your view.) <A/> resolves routes relative to the path of the nested route within which it appears.
-            <a href="page1">"Page 1"</a>
+            <A href="page1">"Page 1"</A>
             <br/>
-            <a href="page2">"Page 2"</a>
-        </div>
-    }
-}
-
-#[component]
-fn Page1() -> impl IntoView {
-    view! {
-        <br /><br /><br /><br /><br />
-        <div id="container">
-            "Page 1"
-        </div>
-    }
-}
-
-#[component]
-fn Page2() -> impl IntoView {
-    view! {
-        <br /><br /><br /><br /><br />
-        <div id="container">
-            "Page 2"
+            <A href="page2">"Page 2"</A>
         </div>
     }
 }
