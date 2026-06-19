@@ -1,0 +1,48 @@
+.letterInDiv {
+  border: 1px yellowgreen solid;
+  display: inline-block;
+}
+
+#letter-S {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-y {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-c {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-i {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-g {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-n1 {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+#letter-n0 {
+  font-weight: bold;
+  opacity: 100%;
+  font-size: 50px;
+}
+
+/*# sourceMappingURL=data:application/json;charset=utf-8,%7B%22version%22:3,%22sourceRoot%22:%22%22,%22sources%22:%5B%22../../css/anim.scss%22%5D,%22names%22:%5B%5D,%22mappings%22:%22AAAA;EACI;EACA;;;AAUA;EACI;EACA;EACA,WARI;;;AAKR;EACI;EACA;EACA,WARI;;;AAKR;EACI;EACA;EACA,WARI;;;AAKR;EACI;EACA;EACA,WARI;;;AAKR;EACI;EACA;EACA,WARI;;;AAYZ;EACI;EACA;EACA,WAfQ;;;AAkBZ;EACI;EACA;EACA,WArBQ%22,%22file%22:%22anim.css%22%7D */

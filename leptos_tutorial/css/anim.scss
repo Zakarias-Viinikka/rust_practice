@@ -1,0 +1,30 @@
+.letterInDiv {
+    border: 1px yellowgreen solid;
+    display: inline-block;
+}
+
+//doing n manually
+$letters: S y c i g;
+$font-size: 50px;
+
+@for $i from 1 through length($letters) {
+    $letter: nth($letters, $i);
+
+    #letter-#{$letter} {
+        font-weight: bold;
+        opacity: 100%;
+        font-size: $font-size;
+    }
+}
+
+#letter-n1 {
+    font-weight: bold;
+    opacity: 100%;
+    font-size: $font-size;
+}
+
+#letter-n0 {
+    font-weight: bold;
+    opacity: 100%;
+    font-size: $font-size;
+}
