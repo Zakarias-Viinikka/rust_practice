@@ -26,6 +26,8 @@ async fn main() {
         manager_never_stops();
     });
     tokio::task::spawn(async_func(tx));
+
+    tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 }
 
 async fn async_func(tx: mpsc::Sender<oneshot::Sender<Arc<i32>>>) {
