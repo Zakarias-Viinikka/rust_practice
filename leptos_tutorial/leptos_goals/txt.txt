@@ -1,1 +1,5 @@
-this is my "Leptos Tutorial (I barely know Rust)"
+oh i could make part of my animation that it has different things to do.
+
+one animation it could do instead of the default is to "pick one letter and move it up and down like it's trying out if the letter looks better moved around like that"
+---
+i need to add logic for "n is in reversed order" when i swap them around otherwise stuff is gonna get messed up maybe. not sure.
