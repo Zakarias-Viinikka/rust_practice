@@ -2,6 +2,7 @@
 name = "async_stuff"
 version = "0.1.0"
 edition = "2024"
+default-run = "str_slice_param"
 
 [dependencies]
 tokio = { version = "1.52.3", features = ["full"] }
