@@ -5,3 +5,4 @@ cli_test_program/target/
 cargo_project_structure_test/target/
 
 **/target
+**/dist
