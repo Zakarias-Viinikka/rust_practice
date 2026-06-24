@@ -9,6 +9,10 @@ impl HonestPerson {
         let statement = "The weather is still weathering today".to_string();
         Self { statement }
     }
+
+    pub fn get_statement(&self) -> &str {
+        &self.statement
+    }
 }
 
 #[derive(Debug)]
@@ -20,5 +24,9 @@ impl LiarPerson {
     pub fn new() -> Self {
         let statement = "I would never lie about anything".to_string();
         Self { statement }
+    }
+
+    pub fn get_statement(&self) -> &str {
+        &self.statement
     }
 }

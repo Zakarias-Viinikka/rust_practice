@@ -25,6 +25,10 @@ pub enum LiarInitialResponse {
     Silence,
 }
 
+//
+// rand stuff below
+//
+
 fn flip_a_coin() -> bool {
     rand::random_bool(0.5)
 }
