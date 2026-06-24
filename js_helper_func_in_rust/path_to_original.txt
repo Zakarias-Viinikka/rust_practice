@@ -1,0 +1,3 @@
+/home/zakke/ProgStuff/leptos_tut_project/leptos_starter/src/signals/memo/
+
+this is the path to the original exercise that gave me the inspiration for what I wanted to learn.

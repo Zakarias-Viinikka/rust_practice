@@ -1,0 +1,17 @@
+i wanna start with just figuring out the basics.
+
+let's say i invent two structs.
+
+let's say 
+
+honestPerson
+
+and
+
+LiarPerson
+
+in order to "get_truth_from(honestPerson) you just gotta "ask()"
+
+but in order to "get_truth_from(LiarPerson)" you gotta "ask()" then "verify()" then "explain_why_they_lied()" then "finally_get_truth()"
+
+and then once you have a Truth struct/enum you can "check how many words are in their truth"
