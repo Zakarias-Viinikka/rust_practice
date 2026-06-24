@@ -1,0 +1,21 @@
+<pre style="background-color:#2b303b;">
+<span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">main</span><span style="color:#c0c5ce;">() {
+</span><span style="color:#c0c5ce;">    println!(&quot;</span><span style="color:#a3be8c;">Hello, world!</span><span style="color:#c0c5ce;">&quot;);
+</span><span style="color:#c0c5ce;">}
+</span><span style="color:#c0c5ce;">
+</span><span style="color:#b48ead;">trait </span><span style="color:#c0c5ce;">a_trait {
+</span><span style="color:#c0c5ce;">    </span><span style="color:#b48ead;">type </span><span style="color:#c0c5ce;">associated_type;
+</span><span style="color:#c0c5ce;">    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">some_method</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) -&gt; </span><span style="color:#b48ead;">Self::</span><span style="color:#c0c5ce;">associated_type;
+</span><span style="color:#c0c5ce;">}
+</span><span style="color:#c0c5ce;">
+</span><span style="color:#b48ead;">struct </span><span style="color:#c0c5ce;">X {
+</span><span style="color:#c0c5ce;">    </span><span style="color:#bf616a;">name</span><span style="color:#c0c5ce;">: String,
+</span><span style="color:#c0c5ce;">}
+</span><span style="color:#c0c5ce;">
+</span><span style="color:#b48ead;">impl </span><span style="color:#c0c5ce;">a_trait </span><span style="color:#b48ead;">for </span><span style="color:#c0c5ce;">X {
+</span><span style="color:#c0c5ce;">    </span><span style="color:#b48ead;">type </span><span style="color:#c0c5ce;">associated_type = String;
+</span><span style="color:#c0c5ce;">    </span><span style="color:#b48ead;">fn </span><span style="color:#8fa1b3;">some_method</span><span style="color:#c0c5ce;">(&amp;</span><span style="color:#bf616a;">self</span><span style="color:#c0c5ce;">) -&gt; </span><span style="color:#b48ead;">Self::</span><span style="color:#c0c5ce;">associated_type {
+</span><span style="color:#c0c5ce;">        &quot;&quot;.</span><span style="color:#96b5b4;">into</span><span style="color:#c0c5ce;">()
+</span><span style="color:#c0c5ce;">    }
+</span><span style="color:#c0c5ce;">}
+</span></pre>
