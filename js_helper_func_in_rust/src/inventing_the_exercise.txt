@@ -15,3 +15,12 @@ in order to "get_truth_from(honestPerson) you just gotta "ask()"
 but in order to "get_truth_from(LiarPerson)" you gotta "ask()" then "verify()" then "explain_why_they_lied()" then "finally_get_truth()"
 
 and then once you have a Truth struct/enum you can "check how many words are in their truth"
+
+
+---
+
+for the increased complexity after that:
+
+1. i wanna make the function a task that you spawn and wait for.
+
+2. i want it to be able to handle smart pointers like arc and whatever.
