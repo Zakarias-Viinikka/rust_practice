@@ -39,13 +39,14 @@ struct TableItem {
 fn get_table_wable_rows(conn: Connection) -> Result<Vec<TableItem>, rusqlite::Error> {
     let query = "SELECT id, color, animal FROM table_wable"; //WHERE id = 1
     //idk why u gotta do this. think it just makes stuff faster or something?
+    // code fails here. idk why.
     let mut stmt = conn.prepare(query)?;
     println!("suvived the prepare statement");
     let table_rows_iter = stmt.query_map([], |row| {
         Ok(TableItem {
             id: row.get(0)?,
-            color: row.get(2)?,
-            animal: row.get(3)?,
+            color: row.get(1)?,
+            animal: row.get(2)?,
         })
     })?;
 
