@@ -1,3 +1,70 @@
-trying to learn a bit about associated types.
+thought about "how should i design my code"
 
-very tired, but wanna see if i can anything done anyway, in terms of learning. 
+im thinking something like
+
+in main fn:
+
+do_animation(decide_what_animation_to_do());
+
+and decide...
+
+returns a
+
+Animation::SpecificAnimation
+
+and SpecificAnimation
+
+implements
+
+SpecificAnimation.do_specific_animation()
+
+which implements
+type: param
+
+and in the trait it's specificed that
+
+do_specific_animation
+
+takes the parameters (&self, params)
+
+---
+
+and if we go back a step.
+
+the do_animation function looks like
+
+do_animation(anim: SpecificAnimation) -> {
+    match anim {
+        //match anim and then call do_animation_specific_animation, based on which SpecificAnimation it is
+}
+
+which means i can put the code for the specific animation in it's own file and have a folder called Animations or something.
+
+---
+
+I think what i want is actually something like this:
+
+variant1(params) => do_variant1_animation(params)
+variant2(params) => do_variant2_animation(params)
+variant3(params) => do_variant3_animation(params)
+
+ but in that case i'd prefer something like this:
+
+//not even a match. just
+variantX(something).do_specific_animation
+
+---
+
+im confused, because idk how i'd acces the params and whatever:
+
+trait AnimationData {
+    type params;
+    fn get_params(&self)
+}
+
+the reason i'm doing it like this is so that i can achieve:
+
+Animation {
+	variant1/*(AnimationData::new*/(arbitrary_param: String, arbitrary_param: bool)
+	variant2(/*AnimationData::new*/(dog: i32, water: bool)
+}

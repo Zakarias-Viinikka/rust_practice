@@ -15,3 +15,5 @@ associated types aren't necessary I think for just that, but if i want my varian
 then I think associated types lets me easily pass in the data.
 
 I'm not entirely sure if what I did really achieves anything, but i feel like the code in main.rs is clean to read and the code is written so that the compiler makes sure everything is the right type despite the parameters for any given animation being arbitrary.
+
+I think the biggest confusion point for me is that I'm trying to force myself to use associated types, but I'm unsure what their use case is exactly and I'm inventing the problem myself so I don't actually know if the solution requires associated types.
