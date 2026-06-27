@@ -1,0 +1,17 @@
+in main. I want it to be something like
+
+do_animation(figure_out_what_anim_to_do())
+
+so i made an enum in main that holds the different animations and they have different data they hold.
+
+i made an "animation.rs" file which is just the trait that is implemented for the data.
+
+the actually_do_the_animation() is separated to animationX.rs file.
+
+the point of the associated type was so that i can have arbitrary parameters for the Animation variants and so that i can call Animation::variantX.do_animation().
+
+associated types aren't necessary I think for just that, but if i want my variantX.do_animation() to have different steps like: animation part 1, then part 2, then part 3
+
+then I think associated types lets me easily pass in the data.
+
+I'm not entirely sure if what I did really achieves anything, but i feel like the code in main.rs is clean to read and the code is written so that the compiler makes sure everything is the right type despite the parameters for any given animation being arbitrary.
