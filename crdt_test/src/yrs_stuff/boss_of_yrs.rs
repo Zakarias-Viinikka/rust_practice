@@ -34,25 +34,24 @@ impl BossOfYrs {
         block_meta_data: String,
         block_id: String,
     ) {
-        /*
-        let textRefExampleData1 = XmlTextPrelim::new("mock data");
-        let textRefExampleData2 = XmlTextPrelim::new("rock sata");
-        let metaDataExample1 = XmlTextPrelim::new("type_of_content: title,".to_string());
-        let metaDataExample2 = XmlTextPrelim::new("type_of_content: regular text,");
-        */
         {
-            let block_content = XmlTextPrelim::new(block_content);
+            let array_length = {
+                let tmp_data_blocks = self.doc.get_or_insert_array(doc_block_id());
+                let mut txn = self.doc.transact();
+                tmp_data_blocks.len(&txn)
+            };
+            let block_content = XmlTextPrelim::new(format!("{{{}}} {}", block_id, block_content));
             //let block_meta_data = XmlElementPrelim::new(block_meta_data, []);
 
             // IMPORTANT
             // for some reason, if i put this code after
             // ...txn =...
             // then my code deadlocks.
-            let data_blocks = self.doc.get_or_insert_map(doc_block_id()); //"text_blocks");
+            let data_blocks = self.doc.get_or_insert_array(doc_block_id()); //"text_blocks");
 
             let mut txn = self.doc.transact_mut();
 
-            data_blocks.insert(&mut txn, block_id.clone(), block_content);
+            data_blocks.insert(&mut txn, array_length, block_content);
         }
         /*
         let data_blocks_metadata = self.doc.get_or_insert_map("text_blocks_metadata");
@@ -61,10 +60,11 @@ impl BossOfYrs {
     }
 
     pub fn show_doc_info(&self) {
-        let map = self.doc.get_or_insert_map(doc_block_id());
+        let array = self.doc.get_or_insert_array(doc_block_id());
         let mut txn = self.doc.transact();
 
-        let json_representation = map.to_json(&txn);
+        let json_representation = array.to_json(&txn);
+        println!("data blocks represented as json:");
         println!("{}", json_representation);
         /*if let Some(mapRef) = txn {
             println!("{}", mapRef.to_json(self.doc.transact()));
