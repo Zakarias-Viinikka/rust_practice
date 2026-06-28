@@ -4,8 +4,11 @@ use leptos_router::components::{Route, Router, Routes}; // routing
 use leptos_use::{
     UseUserMediaOptions, UseUserMediaReturn, use_user_media, use_user_media_with_options,
 };
-use limelight::{DrawMode, Renderer}; //also for drawing the circle
-use limelight_primitives::{Circle, CircleLayer};
+use limelight::{
+    DrawMode, Renderer, renderer::Drawable, state::blending::BlendingFactorSrc::DstAlpha,
+}; //also for drawing the circle
+use limelight_primitives::{Circle, CircleLayer, Color};
+use palette::IntoColor;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
@@ -81,17 +84,21 @@ fn App() -> impl IntoView {
         gl.clear_color(1.0, 0.0, 0.0, 1.0); // red
         gl.clear(WebGl2RenderingContext::COLOR_BUFFER_BIT);
 
-        let grader = Rc::new(RefCell::new(0));
-        let grader_clone = grader.clone();
+        let radius = Rc::new(RefCell::new(0.0));
+        let radius_clone = radius.clone();
         set_interval(
             move || {
-                *grader_clone.borrow_mut() += 1;
+                if *radius_clone.borrow() >= 1.0 {
+                    *radius_clone.borrow_mut() = 0.0;
+                } else {
+                    *radius_clone.borrow_mut() += 0.002;
+                }
 
-                let renderer = Renderer::new(gl); // Pass ownership of gl to renderer
+                let mut renderer = Renderer::new(gl.clone()); // Pass ownership of gl to renderer
                 // After this, `gl` is gone. You use `renderer` now.
-                draw_circle(&renderer);
+                draw_circle(&mut renderer, radius_clone.borrow().clone());
             },
-            Duration::from_millis(100),
+            Duration::from_millis(16),
             //with the std duration thingy i want to say set interval once every 100 ms
         );
     });
@@ -118,15 +125,32 @@ fn App() -> impl IntoView {
     }
 }
 
-fn draw_circle(renderer: &mut Renderer) {
+fn draw_circle(renderer: &mut Renderer, radius: f32) {
     // Create circle data
     let mut circles = CircleLayer::new();
     circles.buffer().set_data(vec![Circle {
         position: [0.0, 0.0],
-        radius: 0.5,
-        color: [1.0, 0.0, 0.0, 1.0].into(),
+        radius: radius,
+        color: Color::from(palette::named::LIGHTSKYBLUE).opacity(0.4),
+        //Color::from<Alpha<Rgb<Srgb, u8>, u8>>(),
     }]);
 
     // Draw it - render() needs &mut self
-    renderer.render(&mut circles, circles.buffer()).unwrap();
+    circles.draw(renderer);
 }
+
+//rgb::Srgb<u8> -> <limelight_primitives::Color>
+
+fn draw_borderless_circle(renderer: &mut Renderer, radius: f32) {
+    let detail = 64u8;
+}
+
+/*
+* alright.
+
+so i just create an array based on the "detail" variable i can decide which is how many lines.
+
+and the array holds x and y cordinates.
+
+and then i just iterate over the array to draw the lines?
+*/

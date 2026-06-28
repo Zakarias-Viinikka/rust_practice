@@ -1,7 +1,6 @@
-I can insert information, and i wrote a function to see if the information was stored.
+did last: changed mapref to array ref
 
 next:
 *being able to insert text at x spot in the mapRef
 *being able to edit text at y position in a text_block (which is what the mapRef stores)
-*change it from using mapRef to using an ArrayRef instead. it isn't necessary to store datablocks and acess with keys since i decided to manage metadata and blocks separately. mapRef by default doesn't sort the list so i would have to manually keep track of that otherwise.
 *I can create/write to a mapRef (which is where I had previously planned to store my text blocks) and i wrote a function to make sure everything is working the way I expect it to. (should turn that into an automatic test eventually)

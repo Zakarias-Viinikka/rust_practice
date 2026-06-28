@@ -1,0 +1,9 @@
+i can draw a circle. i can even increase it's size.
+
+next:
+
+i wanna be able to draw a circle that's just the border of a circle. from what i've understood the best way to do that is to just manually draw lines to create a circle.
+
+at first i thought that would be complicated but i can just distribute points across a circle and store it in a list and then draw lines between the dots.
+
+other than that i wanna start separating my code so my drawing stuff isn't together with all my other stuff.

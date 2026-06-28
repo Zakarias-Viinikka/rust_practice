@@ -1,6 +1,34 @@
-I don't know how but i found the leptos_use crate?
+I don't know how but i found the leptos_use crate so I tried learning about it a litte.
 
 after that I felt a bit lost. but then i just coped the entire side menu with all the titles and i pasted it into a chat ai and asked "does any of this look like it's used for giving me access to the users mic."
 
 and so i went to look at:
+
 use_user_media //https://leptos-use.rs/browser/use_user_media.html
+
+I checked out the UseUserMediaOptions docs. they mention audio in it, so I assume this is how i get access to the users mic as a stream or something.
+
+I tried figuring out how I was supposed to add <audio> in my view since the example docs used <video>. I found the docs for the Leptos html audio stuff and then i asked ai to tell me how to write the <audio> tag in the view.
+
+the code compiled but my web console gave me the error:
+
+browser_audio_visualizer-87ad5bc95ecdc23a.js:222 Failed to get media stream: JsValue(NotFoundError: Requested device not found
+undefined)
+
+I didn't really know how to verify if the AI gave me bad code or if something else was the issue.
+
+I tried figuring out potential reasons for why my code wouldn't work and trying to understand a bit better what was going on.
+
+potential issues:
+
+ *start() method wasn't working
+ *start() was called onload which browser doesn't like, maybe?
+ *my <audio> thingy wasn't working
+
+I made sure the start() issues weren't the cause but for the code the AI gave me I couldn't really verify easily, so I focused on learning more about how the use_user_media stuff works.
+
+chatted with AI about it, trying to understand it more, based on the parameters of the methods I was calling.
+
+Eventually figured out use_user_media by default requests a video stream. and when I typed use_user_media manually I found the option use_user_media_with_options.
+
+then all I had to do was give it the options that would make it request just an audio stream and then it worked.

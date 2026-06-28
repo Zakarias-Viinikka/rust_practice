@@ -141,6 +141,7 @@ dependencies = [
  "leptos_router",
  "limelight",
  "limelight-primitives",
+ "palette",
  "wasm-bindgen",
  "web-sys",
 ]
