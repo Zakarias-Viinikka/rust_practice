@@ -1,0 +1,30 @@
+the drag and reorder stuff worked really easily.
+
+it does a console log of which item it moved and i'll make it so it says what item is below and above it.
+
+for actually calling rust from js i made ai give me some helpful notes:
+
+What you need:
+
+- A #[wasm_bindgen] attribute on a public Rust function.
+- The function is automatically available as a global in JS with the same name.
+
+Rust side:
+
+#[wasm_bindgen]
+pub fn on_reorder(old_index: usize, new_index: usize, value: String) {
+    // validate and update your state here
+}
+
+JS side:
+
+onEnd: function(evt) {
+  window.on_reorder(evt.oldIndex, evt.newIndex, evt.item.querySelector('input').value);
+}
+
+That's it. The function name matches. Arguments convert automatically
+(numbers, strings, basic types). If your project already compiles to WASM,
+wasm_bindgen is already available — just add the attribute and it's callable
+from JS.
+
+the actual book link for the relevant info is this: https://book.leptos.dev/web_sys.html
