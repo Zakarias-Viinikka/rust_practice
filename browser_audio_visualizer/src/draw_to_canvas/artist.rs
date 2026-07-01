@@ -60,3 +60,18 @@ fn jsval_to_err(e: Option<String>, error_context: String) -> String {
         ),
     }
 }
+
+/*
+* future reference
+*
+* use anyhow::{anyhow, Result};
+
+fn try_get_gl(canvas: HtmlCanvasElement) -> Result<WebGl2RenderingContext> {
+    let gl = canvas.get_context("webgl2")
+        .map_err(|_| anyhow!("get_context failed"))?
+        .ok_or(anyhow!("gl object was empty"))?
+        .dyn_into::<WebGl2RenderingContext>()
+        .map_err(|_| anyhow!("failed to convert to WebGL context"))?;
+    Ok(gl)
+}
+*/
