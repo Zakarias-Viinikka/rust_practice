@@ -1,23 +1,11 @@
-#![allow(warnings)]
 use leptos::{leptos_dom::*, prelude::*, reactive::effect};
-use leptos_router::components::{Route, Router, Routes}; // routing
 use leptos_use::{
     UseUserMediaOptions, UseUserMediaReturn, use_user_media, use_user_media_with_options,
 };
-use limelight::{
-    DrawMode, Renderer, renderer::Drawable, state::blending::BlendingFactorSrc::DstAlpha,
-}; //also for drawing the circle
 use limelight_primitives::{Circle, CircleLayer, Color};
-use palette::IntoColor;
-use std::cell::RefCell;
-use std::rc::Rc;
-use std::time::Duration;
-use wasm_bindgen::JsCast;
-use web_sys::{
-    HtmlCanvasElement, PermissionState, PermissionStatus, WebGl2RenderingContext,
-    js_sys::Intl::{DurationFormatPartType::Milliseconds, RelativeTimeFormatUnit::Seconds},
-    window,
-}; //drawing a circle
+
+mod draw_to_canvas;
+use draw_to_canvas::artist::*;
 fn main() {
     console_error_panic_hook::set_once();
     //  trunk serve --open
@@ -25,37 +13,6 @@ fn main() {
 }
 
 #[component]
-
-/*
-* Routing syntax
-*
-*
-<Router>
-  <nav>
-    /* ... */
-  </nav>
-  <main>
-      <Routes fallback=|| "Not found.">
-          <Route path=path!("/") view=DefaultPage/>
-          <Route path=path!("/page1") view=Page1/>        //<- both work
-          <Route path=path!("/page2") view=page2::Page2/> //<- both work
-      </Routes>
-  </main>
-</Router>
-
-
-#[component]
-fn DefaultPage() -> impl IntoView {
-    view! {
-        <br/>   <br/>   <br/>
-        <h2> "Default Page" </h2>
-        <A href="/page1">"Page 1"</A>
-        <br/>
-        <A href="/page2">"Page 2"</A>
-    }
-}
-
-*/
 fn App() -> impl IntoView {
     let options = UseUserMediaOptions::default().audio(true).video(false);
     let audio_ref = NodeRef::<leptos::html::Audio>::new();
@@ -73,7 +30,10 @@ fn App() -> impl IntoView {
 
     let canvas_ref = NodeRef::<leptos::html::Canvas>::new();
 
+
     canvas_ref.on_load(|canvas| {
+        let artist = Artist::new(canvas); //::new(canvas_ref);
+        /*
         let gl = canvas
             .get_context("webgl2")
             .unwrap()
@@ -96,11 +56,12 @@ fn App() -> impl IntoView {
 
                 let mut renderer = Renderer::new(gl.clone()); // Pass ownership of gl to renderer
                 // After this, `gl` is gone. You use `renderer` now.
-                draw_circle(&mut renderer, radius_clone.borrow().clone());
+                //draw_circle(&mut renderer, radius_clone.borrow().clone());
             },
             Duration::from_millis(16),
             //with the std duration thingy i want to say set interval once every 100 ms
         );
+        */
     });
 
     view! {
@@ -125,6 +86,7 @@ fn App() -> impl IntoView {
     }
 }
 
+/*
 fn draw_circle(renderer: &mut Renderer, radius: f32) {
     // Create circle data
     let mut circles = CircleLayer::new();
@@ -144,13 +106,4 @@ fn draw_circle(renderer: &mut Renderer, radius: f32) {
 fn draw_borderless_circle(renderer: &mut Renderer, radius: f32) {
     let detail = 64u8;
 }
-
-/*
-* alright.
-
-so i just create an array based on the "detail" variable i can decide which is how many lines.
-
-and the array holds x and y cordinates.
-
-and then i just iterate over the array to draw the lines?
 */
