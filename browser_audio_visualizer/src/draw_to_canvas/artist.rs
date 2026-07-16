@@ -17,6 +17,8 @@ use limelight::{
     DrawMode, Renderer, renderer::Drawable, state::blending::BlendingFactorSrc::DstAlpha,
 }; //also for drawing the circle
 
+use anyhow::{Result, anyhow};
+
 pub struct Artist {
     gl: WebGl2RenderingContext,
     //limelight: ,*/
@@ -74,4 +76,6 @@ fn try_get_gl(canvas: HtmlCanvasElement) -> Result<WebGl2RenderingContext> {
         .map_err(|_| anyhow!("failed to convert to WebGL context"))?;
     Ok(gl)
 }
+
+it's ai generated but the idea is something i want to remember and explore next time i do something similar
 */

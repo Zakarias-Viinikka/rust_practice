@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>part 4 </title>
+</head>
+
+<body>
+  <script type="module">
+  const myWorker = new Worker('./worker.js', { type: 'module' });
+
+  // Wait for the worker to be fully initialised
+  await new Promise(resolve => {
+    myWorker.onmessage = (e) => {
+      if (e.data[0] === "ready") resolve();
+    };
+  });
+  console.log("ready to do business");
+  let response;
+  response = await askWorker(["initialize", "idiotmatic_db_name"]);
+  console.log(response)
+
+  /*response = await askWorker(["drop_table"]);
+  console.log(response);*/
+
+  response = await askWorker(["insert_data", "woof", "volume: loud"]);
+  console.log(response);
+  /*
+  table_name: String,
+  arguments: String,
+  columns_to_read: Vec<String>,
+  */
+  console.log("reading table");
+  response = await askWorker(["get_data", "content", "", ["textblock"]]);
+  console.log(response);
+
+  response = await askWorker(["check_table", "content"]);
+  console.log(response);
+
+  function askWorker(msg) {
+    return new Promise(resolve => {
+      myWorker.onmessage = (e) => resolve(e.data);
+      myWorker.postMessage(msg);
+    });
+  }
+  </script>
+</body>
+</html>
