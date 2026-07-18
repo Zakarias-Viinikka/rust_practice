@@ -75,55 +75,6 @@ pub fn insert_into_table(db: *mut ffi::sqlite3, table: &Table, values: Vec<Strin
     Ok(())
 }
 
-/*pub fn export_db(db: *mut ffi::sqlite3) -> Result<()> {
-    unsafe {
-        let mut size: ffi::sqlite3_int64 = 0;
-        let data = ffi::sqlite3_serialize(db, c"main".as_ptr().cast(), &mut size, 0);
-
-        if data.is_null() {
-            bail!("Failed to serialize database");
-        }
-
-        // Create a slice from the raw data pointer
-        let bytes = std::slice::from_raw_parts(data as *const u8, size as usize);
-
-        // Create a Uint8Array from the byte slice
-        let uint8_array = js_sys::Uint8Array::view(bytes);
-
-        // Create the Blob from the Array
-        let blob = Blob::new_with_u8_array_sequence(&js_sys::Array::of1(&uint8_array))
-            .map_err(|e| anyhow!("Failed to create Blob: {:?}", e))?;
-
-        // Create object URL and trigger download
-        let url = Url::create_object_url_with_blob(&blob)
-            .map_err(|e| anyhow!("Failed to create object URL: {:?}", e))?;
-
-        let window = web_sys::window().ok_or_else(|| anyhow!("No window available"))?;
-
-        let document = window
-            .document()
-            .ok_or_else(|| anyhow!("No document available"))?;
-
-        let a: web_sys::HtmlElement = document
-            .create_element("a")
-            .map_err(|e| anyhow!("Failed to create <a> element: {:?}", e))?
-            .unchecked_into();
-
-        a.set_attribute("href", &url)
-            .map_err(|e| anyhow!("Failed to set href: {:?}", e))?;
-
-        a.set_attribute("download", "database.sqlite")
-            .map_err(|e| anyhow!("Failed to set download: {:?}", e))?;
-
-        a.click();
-
-        // Free memory
-        ffi::sqlite3_free(data as *mut std::ffi::c_void);
-
-        Ok(())
-    }
-}*/
-
 pub fn drop_table(db_conn: *mut ffi::sqlite3, table_name: &str) -> Result<(), JsValue> {
     let sql = format!("DROP TABLE IF EXISTS {};", table_name);
     let c_sql = CString::new(sql).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -204,4 +155,107 @@ pub fn table_shape(db_conn: *mut ffi::sqlite3, table_name: &str) -> Result<Vec<S
     unsafe { ffi::sqlite3_finalize(stmt) };
 
     Ok(columns)
+}
+
+pub fn edit_col_in_row(
+    db: *mut ffi::sqlite3,
+    table_name: &str,
+    pk_col: &str,
+    row_id: &str,
+    column: &str,
+    new_value: &str,
+) -> Result<()> {
+    if db.is_null() {
+        bail!("db pointer is null");
+    }
+
+    let sql = format!("UPDATE {table_name} SET {column} = ?1 WHERE {pk_col} = ?2;");
+    let sql_cstr = CString::new(sql)?;
+
+    let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
+    let ret = unsafe {
+        ffi::sqlite3_prepare_v2(db, sql_cstr.as_ptr(), -1, &mut stmt, std::ptr::null_mut())
+    };
+    if ret != ffi::SQLITE_OK {
+        bail!("prepare failed: {}", ffi::code_to_str(ret));
+    }
+
+    let value_cstr = CString::new(new_value)?;
+    let id_cstr = CString::new(row_id)?;
+    unsafe {
+        ffi::sqlite3_bind_text(stmt, 1, value_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
+        ffi::sqlite3_bind_text(stmt, 2, id_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
+    }
+
+    let step_ret = unsafe { ffi::sqlite3_step(stmt) };
+    unsafe { ffi::sqlite3_finalize(stmt) };
+
+    if step_ret != ffi::SQLITE_DONE {
+        bail!("update failed: step returned {}", step_ret);
+    }
+
+    Ok(())
+}
+
+pub fn delete_row(
+    db: *mut ffi::sqlite3,
+    table_name: &str,
+    pk_col: &str,
+    row_id: &str,
+) -> Result<()> {
+    if db.is_null() {
+        bail!("db pointer is null");
+    }
+
+    let sql = format!("DELETE FROM {table_name} WHERE {pk_col} = ?1;");
+    let sql_cstr = CString::new(sql)?;
+
+    let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
+    let ret = unsafe {
+        ffi::sqlite3_prepare_v2(db, sql_cstr.as_ptr(), -1, &mut stmt, std::ptr::null_mut())
+    };
+    if ret != ffi::SQLITE_OK {
+        bail!("prepare failed: {}", ffi::code_to_str(ret));
+    }
+
+    let id_cstr = CString::new(row_id)?;
+    unsafe {
+        ffi::sqlite3_bind_text(stmt, 1, id_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
+    }
+
+    let step_ret = unsafe { ffi::sqlite3_step(stmt) };
+    unsafe { ffi::sqlite3_finalize(stmt) };
+
+    if step_ret != ffi::SQLITE_DONE {
+        bail!("delete failed: step returned {}", step_ret);
+    }
+
+    Ok(())
+}
+
+pub fn export_db_as_file(db: *mut ffi::sqlite3) -> Result<Vec<u8>> {
+    if db.is_null() {
+        bail!("db pointer is null");
+    }
+
+    let schema = CString::new("main")?;
+    let mut size: ffi::sqlite3_int64 = 0;
+
+    // SAFETY: db is a valid open connection; schema is a valid nul-terminated
+    // string; size is a valid out-pointer.
+    let data_ptr = unsafe { ffi::sqlite3_serialize(db, schema.as_ptr(), &mut size, 0) };
+    if data_ptr.is_null() {
+        bail!("sqlite3_serialize failed (out of memory or empty db)");
+    }
+
+    // SAFETY: data_ptr is non-null and valid for `size` bytes on success.
+    let bytes = unsafe { std::slice::from_raw_parts(data_ptr, size as usize) }.to_vec();
+
+    // SAFETY: we own this buffer (no SQLITE_SERIALIZE_NOCOPY was passed),
+    // and we've already copied it into `bytes`, so it's safe to free now.
+    unsafe {
+        ffi::sqlite3_free(data_ptr as *mut std::os::raw::c_void);
+    }
+
+    Ok(bytes)
 }

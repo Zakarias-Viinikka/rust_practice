@@ -11,7 +11,7 @@ default = ["console_error_panic_hook"]
 
 [dependencies]
 wasm-bindgen = "0.2.84"
-web-sys = { version = "0.3.103", features = ["DragEvent", "Element", "HtmlElement", "DomTokenList", "NodeList", "DomRect", "Blob", "Url", "console"] }
+web-sys = { version = "0.3.103", features = ["DragEvent", "Element", "HtmlElement", "DomTokenList", "NodeList", "DomRect", "Blob", "Url", "console", "Window", "Document", "HtmlAnchorElement"] }
 sqlite-wasm-rs = { version = "0.4.5", default-features = false, features = ["precompiled"] }
 anyhow = "1.0"
 serde = { version = "1.0.228", features = ["derive"] }

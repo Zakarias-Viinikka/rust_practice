@@ -79,6 +79,40 @@ impl LiveForever {
     pub async fn check_table(&self, table_name: &str) -> Result<Vec<String>, JsValue> {
         black_magic::table_shape(self.db_conn, table_name)
     }
+    pub async fn edit_col_in_row(
+        &self,
+        table_name: String,
+        pk_col: String,
+        row_id: String,
+        column: String,
+        new_value: String,
+    ) -> Result<(), JsValue> {
+        black_magic::edit_col_in_row(
+            self.db_conn,
+            &table_name,
+            &pk_col,
+            &row_id,
+            &column,
+            &new_value,
+        )
+        .map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn delete_row(
+        &self,
+        table_name: String,
+        pk_col: String,
+        row_id: String,
+    ) -> Result<(), JsValue> {
+        black_magic::delete_row(self.db_conn, &table_name, &pk_col, &row_id)
+            .map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn export_db_as_file(&self) -> Result<Vec<u8>, JsValue> {
+        black_magic::export_db_as_file(self.db_conn).map_err(|e| JsValue::from(e.to_string()))
+    }
 }
 
 // https://wasm-bindgen.github.io/wasm-bindgen/examples/wasm-in-web-worker.html

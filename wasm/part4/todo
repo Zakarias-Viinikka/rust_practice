@@ -1,0 +1,10 @@
+//working on
+swapping to cols in different rows.
+
+todo:
+*edit_col_in_row //check this one works and stuff. havent tested it and stuff yet.
+*delete row //check this one works and stuff too
+*edit rows //check if it works
+*tests
+*make it so sorting by "position in list" is efficient
+*either export the db or figure out how to show all of it's info on a page u can just open so it's easy to analyze what the db looks like.
