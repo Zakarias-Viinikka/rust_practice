@@ -160,8 +160,7 @@ pub fn table_shape(db_conn: *mut ffi::sqlite3, table_name: &str) -> Result<Vec<S
 pub fn edit_col_in_row(
     db: *mut ffi::sqlite3,
     table_name: &str,
-    pk_col: &str,
-    row_id: &str,
+    identifier_arg: &str,
     column: &str,
     new_value: &str,
 ) -> Result<()> {

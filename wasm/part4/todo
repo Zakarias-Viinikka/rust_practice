@@ -2,7 +2,10 @@
 swapping to cols in different rows.
 
 todo:
-*edit_col_in_row //check this one works and stuff. havent tested it and stuff yet.
+*edit_col_in_row //check this one works and stuff. havent tested it and stuff yet. <-- currently in the middle of this
+    :ai wrote some weird thing for the actual parameters it takes in, i gotta change that also need to write the create_sql_statement for it.
+    update exists, but i gotta make sure it's actually the correct one? idk. just gotta make sure it matches my black_magic_read and check if that one is even using my
+    sql_statement creater thing
 *delete row //check this one works and stuff too
 *edit rows //check if it works
 *tests

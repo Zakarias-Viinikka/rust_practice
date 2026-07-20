@@ -4,157 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>part 4</title>
-<style>
-  :root {
-    --bg: #f7f7f5;
-    --panel: #ffffff;
-    --border: #dcdcd8;
-    --text: #1a1a1a;
-    --muted: #6b6b68;
-    --accent: #3a5ccc;
-    --accent-hover: #2c47a3;
-    --danger: #c0392b;
-    --mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    padding: 2rem;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  h1 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 0 0 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
-  #status {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--danger);
-    display: inline-block;
-  }
-  #status.ready { background: #2e8b57; }
-
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1rem;
-    max-width: 900px;
-  }
-  section {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1rem;
-  }
-  section h2 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: var(--muted);
-    margin: 0 0 .75rem;
-    font-weight: 600;
-  }
-  input {
-    width: 100%;
-    font-family: var(--mono);
-    font-size: 13px;
-    padding: .4rem .5rem;
-    margin-bottom: .5rem;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--bg);
-    color: var(--text);
-  }
-  input:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-  }
-  button {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 600;
-    padding: .45rem .8rem;
-    border: none;
-    border-radius: 4px;
-    background: var(--accent);
-    color: #fff;
-    cursor: pointer;
-  }
-  button:hover { background: var(--accent-hover); }
-  button.danger { background: var(--danger); }
-  button.danger:hover { background: #96261a; }
-
-  #log {
-    max-width: 900px;
-    margin-top: 1.5rem;
-    background: #111318;
-    color: #d8dee9;
-    border-radius: 6px;
-    padding: 1rem;
-    max-height: 240px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    font-size: 12px;
-  }
-  #log div { margin-bottom: .4rem; }
-  #log .tag { color: #6ec1ff; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<h1><span id="status"></span>db test harness</h1>
-
-<div class="grid">
-
-  <section>
-    <h2>insert</h2>
-    <input id="ins-a" placeholder="field 1">
-    <input id="ins-b" placeholder="field 2">
-    <button onclick="doInsert()">Insert</button>
-  </section>
-
-  <section>
-    <h2>read</h2>
-    <input id="read-table" placeholder="table name" value="content">
-    <button onclick="doGet()">Get data</button>
-    <button onclick="doCheck()">Check table</button>
-  </section>
-
-  <section>
-    <h2>target row</h2>
-    <input id="row-table" placeholder="table name">
-    <input id="row-pk" placeholder="pk column">
-    <input id="row-id" placeholder="row id">
-  </section>
-
-  <section>
-    <h2>edit</h2>
-    <input id="edit-col" placeholder="column">
-    <input id="edit-val" placeholder="new value">
-    <button onclick="doEdit()">Edit row</button>
-  </section>
-
-  <section>
-    <h2>delete</h2>
-    <button class="danger" onclick="doDelete()">Delete row</button>
-  </section>
-
-  <section>
-    <h2>export</h2>
-    <button onclick="doExport()">Export db</button>
-  </section>
-
-</div>
-
-<div id="log"></div>
+    <h1><span id="status"></span>db test harness</h1>
+    <div class="grid">
+    <section>
+        <h2>insert</h2>
+        <input id="ins-a" placeholder="field 1">
+        <input id="ins-b" placeholder="field 2">
+        <button onclick="doInsert()">Insert</button>
+    </section>
+    <section>
+        <h2>read</h2>
+        <input id="read-table" placeholder="table name" value="content">
+        <button onclick="doGet()">Get data</button>
+        <button onclick="doCheck()">Check table</button>
+    </section>
+    <section>
+        <h2>target row</h2>
+        <input id="row-table" placeholder="table name">
+        <input id="row-pk" placeholder="pk column">
+        <input id="row-id" placeholder="row id">
+    </section>
+    <section>
+        <h2>edit</h2>
+        <input id="edit-col" placeholder="column id">
+        <input id="edit-val" placeholder="new value">
+        <button onclick="doEdit()">Edit row</button>
+    </section>
+    <section>
+        <h2>delete</h2>
+        <button class="danger" onclick="doDelete()">Delete row</button>
+    </section>
+    <section>
+        <h2>export</h2>
+        <button onclick="doExport()">Export db</button>
+    </section>
+    </div>
+    <div class="output-row">
+    <div id="table_dump" class="table-dumb"></div>
+    <div id="log"></div>
+    </div>
 
 <script type="module">
 const myWorker = new Worker('./worker.js', { type: 'module' });
@@ -165,9 +56,10 @@ await new Promise(resolve => {
   };
 });
 document.getElementById('status').classList.add('ready');
-log('ready', 'ready to do business');
 
 await ask(["initialize", "idiotmatic_db_name"]);
+
+log('ready', 'ready to do business');
 
 function ask(msg) {
   return new Promise(resolve => {
@@ -182,7 +74,50 @@ function log(tag, data) {
   line.innerHTML = `<span class="tag">[${tag}]</span> ${JSON.stringify(data)}`;
   el.appendChild(line);
   el.scrollTop = el.scrollHeight;
+  dumpTable();
 }
+
+async function dumpTable() {
+  const table = document.getElementById('read-table').value;
+  const table_data = await ask(["get_data", table, "", [""]]);
+  const table_shape = await ask(["check_table", table]);
+  renderDataToTable(table, table_data, table_shape);
+}
+
+function renderDataToTable(table, table_data, table_shape) {
+  const el = document.getElementById('table_dump');
+  el.innerHTML = '';
+  const rows = table_data[1];
+  const columnNames = table_shape[1].map(info => {
+    const match = info.match(/name=([^,]+)/);
+    return match ? match[1] : '';
+  });
+
+  const tableEl = document.createElement('table');
+  tableEl.className = 'data-table';
+
+  const headerRow = document.createElement('tr');
+  columnNames.forEach(name => {
+    const th = document.createElement('th');
+    th.textContent = name;
+    headerRow.appendChild(th);
+  });
+  tableEl.appendChild(headerRow);
+
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+    row.forEach(cell => {
+      const td = document.createElement('td');
+      td.textContent = cell;
+      tr.appendChild(td);
+    });
+    tableEl.appendChild(tr);
+  });
+
+  el.appendChild(tableEl);
+  el.scrollTop = el.scrollHeight;
+}
+
 
 window.doInsert = async () => {
   const a = document.getElementById('ins-a').value;
@@ -201,6 +136,26 @@ window.doCheck = async () => {
 };
 
 window.doEdit = async () => {
+  /*
+  pub async fn edit_col_in_row(
+      &self,
+      table_name: String,
+      pk_col: String,
+      row_id: String,
+      column: String,
+      new_value: String,
+  ) -> Result<(), JsValue> {
+      black_magic::edit_col_in_row(
+          self.db_conn,
+          &table_name,
+          &pk_col,
+          &row_id,
+          &column,
+          &new_value,
+      )
+      .map_err(|e| JsValue::from(e.to_string()))?;
+      Ok(())
+  } */
   const table = document.getElementById('row-table').value;
   const pk = document.getElementById('row-pk').value;
   const id = document.getElementById('row-id').value;

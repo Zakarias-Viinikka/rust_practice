@@ -101,7 +101,7 @@ pub fn generate_read_from_table_sql(
 ) -> String {
     //SELECT col1, col2 FROM table_name WHERE id = 1;
     // SELECT  FROM content WHERE ;
-    let arguments = if arguments.is_empty() {
+    let arguments = if arguments.is_empty() || arguments == [""] {
         String::new()
     } else {
         //response = await askWorker(["get_data", "content", "", [""]]);
@@ -116,12 +116,12 @@ pub fn generate_read_from_table_sql(
     } else {
         columns_to_read.join(", ")
     };
-    console::log_1(&JsValue::from(format!(
+    /*console::log_1(&JsValue::from(format!(
         "SELECT {cols} FROM {table}{args};",
         cols = columns,
         table = table_name.as_ref(),
         args = arguments,
-    )));
+    )));*/
     format!(
         "SELECT {cols} FROM {table}{args};",
         cols = columns,
@@ -288,6 +288,99 @@ mod tests {
     fn test_no_columns_no_conditions() {
         let sql = generate_read_from_table_sql("events", vec![], vec![]);
         assert_eq!(sql, "SELECT * FROM events;");
+    }
+
+    // --- cases the current implementation already handles correctly ---
+
+    #[test]
+    fn empty_arguments_vec_omits_where() {
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec![],
+            vec!["col1".to_string(), "col2".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1, col2 FROM content;");
+    }
+
+    #[test]
+    fn single_empty_string_argument_omits_where() {
+        // matches the askWorker(["get_data", "content", "", [""]]) convention
+        let sql =
+            generate_read_from_table_sql("content", vec!["".to_string()], vec!["col1".to_string()]);
+        assert_eq!(sql, "SELECT col1 FROM content;");
+    }
+
+    #[test]
+    fn single_empty_string_column_becomes_star() {
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["id = 1".to_string()],
+            vec!["".to_string()],
+        );
+        assert_eq!(sql, "SELECT * FROM content WHERE id = 1;");
+    }
+
+    #[test]
+    fn both_empty_gives_select_star_no_where() {
+        let sql =
+            generate_read_from_table_sql("content", vec!["".to_string()], vec!["".to_string()]);
+        assert_eq!(sql, "SELECT * FROM content;");
+    }
+
+    #[test]
+    fn normal_case_still_works() {
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["id = 1".to_string()],
+            vec!["col1".to_string(), "col2".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1, col2 FROM content WHERE id = 1;");
+    }
+
+    // --- cases that currently FAIL: zero-length / mixed empty entries aren't filtered ---
+
+    #[test]
+    fn zero_length_columns_vec_should_be_star() {
+        // The "*" branch only triggers on len() == 1 with an empty string.
+        // A zero-length vec skips it and joins nothing, producing
+        // "SELECT  FROM content;" instead of "SELECT * FROM content;".
+        let sql = generate_read_from_table_sql("content", vec![], vec![]);
+        assert_eq!(sql, "SELECT * FROM content;");
+    }
+
+    #[test]
+    fn two_empty_string_arguments_should_omit_where() {
+        // len() == 2, so the single-empty-string check is skipped and both
+        // empty strings get joined with " AND ", producing
+        // "SELECT * FROM content WHERE  AND ;".
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["".to_string(), "".to_string()],
+            vec!["".to_string()],
+        );
+        assert_eq!(sql, "SELECT * FROM content;");
+    }
+
+    #[test]
+    fn empty_string_mixed_with_real_argument_should_be_filtered() {
+        // Currently produces "... WHERE  AND id = 1;" — dangling leading AND.
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["".to_string(), "id = 1".to_string()],
+            vec!["col1".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
+    }
+
+    #[test]
+    fn empty_string_mixed_with_real_column_should_be_filtered() {
+        // Currently produces "SELECT col1,  FROM content;" — trailing empty column.
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["id = 1".to_string()],
+            vec!["col1".to_string(), "".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
     }
 }
 //cargo test create_sql_statements::
