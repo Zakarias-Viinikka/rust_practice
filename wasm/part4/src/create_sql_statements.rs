@@ -102,42 +102,40 @@ where
 
 pub fn generate_read_from_table_sql(
     table_name: impl AsRef<str>,
-    arguments: Vec<String>,
-    columns_to_read: Vec<String>,
+    arguments: &[impl AsRef<str>],
+    columns_to_read: &[impl AsRef<str>],
 ) -> String {
-    // Filter out empty strings from the column list
+    // Collect non‑empty columns as &str slices
     let valid_columns: Vec<&str> = columns_to_read
         .iter()
-        .filter(|c| !c.is_empty())
-        .map(|c| c.as_str())
+        .filter(|c| !c.as_ref().is_empty())
+        .map(|c| c.as_ref())
         .collect();
 
-    // Default to "*" if no columns remain
     let columns = if valid_columns.is_empty() {
         "*".to_string()
     } else {
         valid_columns.join(", ")
     };
 
-    // Filter out empty strings from the conditions
+    // Collect non‑empty argument conditions as &str slices
     let valid_conditions: Vec<&str> = arguments
         .iter()
-        .filter(|a| !a.is_empty())
-        .map(|a| a.as_str())
+        .filter(|a| !a.as_ref().is_empty())
+        .map(|a| a.as_ref())
         .collect();
 
-    // Attach WHERE only if there are valid conditions
-    let args = if valid_conditions.is_empty() {
+    let where_clause = if valid_conditions.is_empty() {
         String::new()
     } else {
         format!(" WHERE {}", valid_conditions.join(" AND "))
     };
 
     format!(
-        "SELECT {cols} FROM {table}{args};",
-        cols = columns,
-        table = table_name.as_ref(),
-        args = args,
+        "SELECT {} FROM {}{};",
+        columns,
+        table_name.as_ref(),
+        where_clause
     )
 }
 
@@ -313,29 +311,21 @@ mod tests {
     #[test]
     fn test_select_all_columns_no_conditions() {
         // Empty vecs for both → SELECT * with no WHERE
-        let sql = generate_read_from_table_sql("players", vec![], vec![]);
+        let sql = generate_read_from_table_sql("players", &[] as &[&str], &[] as &[&str]);
         assert_eq!(sql, "SELECT * FROM players;");
     }
 
     #[test]
     fn single_empty_string_column_becomes_star() {
-        // vec![""] in columns slot → treated as "give me all columns"
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["id = 1".to_string()],
-            vec!["".to_string()],
-        );
+        // [""] in columns slot → treated as "give me all columns"
+        let sql = generate_read_from_table_sql("content", &["id = 1"], &[""]);
         assert_eq!(sql, "SELECT * FROM content WHERE id = 1;");
     }
 
     #[test]
     fn empty_string_mixed_with_real_column_should_be_filtered() {
         // Empty strings in the columns list must be filtered out
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["id = 1".to_string()],
-            vec!["col1".to_string(), "".to_string()],
-        );
+        let sql = generate_read_from_table_sql("content", &["id = 1"], &["col1", ""]);
         assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
     }
 
@@ -345,50 +335,36 @@ mod tests {
 
     #[test]
     fn empty_arguments_vec_omits_where() {
-        // Empty conditions vec → no WHERE clause at all
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec![],
-            vec!["col1".to_string(), "col2".to_string()],
-        );
+        // Empty conditions slice → no WHERE clause at all
+        let sql = generate_read_from_table_sql("content", &[] as &[&str], &["col1", "col2"]);
         assert_eq!(sql, "SELECT col1, col2 FROM content;");
     }
 
     #[test]
     fn single_empty_string_argument_omits_where() {
         // A single empty string in conditions → treat as "no conditions"
-        let sql =
-            generate_read_from_table_sql("content", vec!["".to_string()], vec!["col1".to_string()]);
+        let sql = generate_read_from_table_sql("content", &[""], &["col1"]);
         assert_eq!(sql, "SELECT col1 FROM content;");
     }
 
     #[test]
     fn both_empty_gives_select_star_no_where() {
         // Empty string in both slots → SELECT * and no WHERE
-        let sql =
-            generate_read_from_table_sql("content", vec!["".to_string()], vec!["".to_string()]);
+        let sql = generate_read_from_table_sql("content", &[""], &[""]);
         assert_eq!(sql, "SELECT * FROM content;");
     }
 
     #[test]
     fn two_empty_string_arguments_should_omit_where() {
         // Multiple empty strings → all filtered, no WHERE remains
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["".to_string(), "".to_string()],
-            vec!["".to_string()],
-        );
+        let sql = generate_read_from_table_sql("content", &["", ""], &[""]);
         assert_eq!(sql, "SELECT * FROM content;");
     }
 
     #[test]
     fn empty_string_mixed_with_real_argument_should_be_filtered() {
         // Mix of empty and real conditions → empty removed, real kept
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["".to_string(), "id = 1".to_string()],
-            vec!["col1".to_string()],
-        );
+        let sql = generate_read_from_table_sql("content", &["", "id = 1"], &["col1"]);
         assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
     }
 
@@ -399,11 +375,7 @@ mod tests {
     #[test]
     fn test_select_specific_columns_with_condition() {
         // Explicit columns + single condition
-        let sql = generate_read_from_table_sql(
-            "games",
-            vec!["result = '1-0'".to_string()],
-            vec!["white".to_string(), "black".to_string()],
-        );
+        let sql = generate_read_from_table_sql("games", &["result = '1-0'"], &["white", "black"]);
         assert_eq!(sql, "SELECT white, black FROM games WHERE result = '1-0';");
     }
 
@@ -412,8 +384,8 @@ mod tests {
         // Multiple columns + multiple conditions joined with AND
         let sql = generate_read_from_table_sql(
             "puzzles",
-            vec!["rating > 2000".to_string(), "theme = 'mate'".to_string()],
-            vec!["id".to_string(), "fen".to_string(), "solution".to_string()],
+            &["rating > 2000", "theme = 'mate'"],
+            &["id", "fen", "solution"],
         );
         assert_eq!(
             sql,
@@ -423,23 +395,16 @@ mod tests {
 
     #[test]
     fn test_empty_columns_with_condition() {
-        // Empty columns vec (len 0) + a real condition → * plus WHERE
-        let sql = generate_read_from_table_sql(
-            "openings",
-            vec!["name LIKE '%Sicilian%'".to_string()],
-            vec![],
-        );
+        // Empty columns slice + a real condition → * plus WHERE
+        let sql =
+            generate_read_from_table_sql("openings", &["name LIKE '%Sicilian%'"], &[] as &[&str]);
         assert_eq!(sql, "SELECT * FROM openings WHERE name LIKE '%Sicilian%';");
     }
 
     #[test]
     fn normal_case_still_works() {
         // Basic happy path: explicit columns + single condition
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["id = 1".to_string()],
-            vec!["col1".to_string(), "col2".to_string()],
-        );
+        let sql = generate_read_from_table_sql("content", &["id = 1"], &["col1", "col2"]);
         assert_eq!(sql, "SELECT col1, col2 FROM content WHERE id = 1;");
     }
 }

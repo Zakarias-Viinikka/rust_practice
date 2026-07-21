@@ -44,6 +44,11 @@ const handlers = {
     await db_manager.delete_row(msg[1], msg[2]);
     return "ok";
   },
+  // msg: ["swap_columns", table_name, row_id_1, row_id_2, column]
+  swap_columns: async (msg) => {
+    await db_manager.swap_columns(msg[1], msg[2], msg[3], msg[4]);
+    return "ok";
+  },
 };
 
 self.onmessage = async (e) => {

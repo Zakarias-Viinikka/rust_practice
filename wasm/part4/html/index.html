@@ -37,6 +37,16 @@
         <button onclick="doEdit()">Edit row</button>
     </section>
     <section>
+        <h2>swap</h2>
+        <input id="swap-row-id-1" placeholder="row id 1"
+               oninput="localStorage.setItem('swap-row-id-1', this.value)">
+        <input id="swap-row-id-2" placeholder="row id 2"
+               oninput="localStorage.setItem('swap-row-id-2', this.value)">
+        <input id="swap-col" placeholder="column name"
+               oninput="localStorage.setItem('swap-col', this.value)">
+        <button onclick="doSwap()">Swap columns</button>
+    </section>
+    <section>
         <h2>delete</h2>
         <input id="delete-row-id" placeholder="row id"
                oninput="localStorage.setItem('delete-row-id', this.value)">
@@ -150,6 +160,13 @@ window.doEdit = async () => {
   const col = document.getElementById('edit-col').value;
   const val = document.getElementById('edit-val').value;
   log('edit', await ask(["edit_row", table, id, col, val]));
+};
+window.doSwap = async () => {
+  const table = document.getElementById('read-table').value;
+  const id1 = document.getElementById('swap-row-id-1').value;
+  const id2 = document.getElementById('swap-row-id-2').value;
+  const col = document.getElementById('swap-col').value;
+  log('swap', await ask(["swap_columns", table, id1, id2, col]));
 };
 
 window.doDelete = async () => {

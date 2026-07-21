@@ -161,13 +161,16 @@ pub fn edit_col_in_row(
     db: *mut ffi::sqlite3,
     table_name: &str,
     row: &str,
-    column_and_new_value: (String, String),
+    column_and_new_value: (impl AsRef<str>, impl AsRef<str>),
 ) -> Result<()> {
     if db.is_null() {
         bail!("db pointer is null");
     }
-
-    let sql = generate_update_sql(table_name, row.parse()?, &column_and_new_value);
+    let (column, new_value) = (
+        column_and_new_value.0.as_ref(),
+        column_and_new_value.1.as_ref(),
+    );
+    let sql = generate_update_sql(table_name, row.parse()?, &(column, new_value));
     let sql_cstr = CString::new(sql)?;
 
     let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
@@ -178,8 +181,8 @@ pub fn edit_col_in_row(
         bail!("prepare failed: {}", ffi::code_to_str(ret));
     }
 
-    let value_cstr = CString::new(column_and_new_value.0)?;
-    let id_cstr = CString::new(column_and_new_value.1)?;
+    let value_cstr = CString::new(column)?;
+    let id_cstr = CString::new(new_value)?;
     unsafe {
         ffi::sqlite3_bind_text(stmt, 1, value_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
         ffi::sqlite3_bind_text(stmt, 2, id_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());

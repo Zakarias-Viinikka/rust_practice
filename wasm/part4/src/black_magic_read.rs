@@ -12,20 +12,14 @@ use std::ffi::{CStr, CString}; //let sql_cstr = CString::new(sql).map_err(|e| an
 //SELECT col1, col2 FROM table_name WHERE id = 1;
 pub fn read_from_db(
     db: *mut ffi::sqlite3,
-    table_name: String,
-    arguments: String,
-    columns_to_read: Vec<String>, // empty means SELECT *
+    table_name: impl AsRef<str>,
+    arguments: &[impl AsRef<str>],
+    columns_to_read: &[impl AsRef<str>],
 ) -> Result<Vec<Vec<String>>> {
     if db.is_null() {
         bail!("db pointer is null");
     }
 
-    let condition = if arguments.is_empty() {
-        "".to_string()
-    } else {
-        format!("id = '{}'", arguments)
-    };
-    let arguments = vec![condition];
     let sql = generate_read_from_table_sql(&table_name, arguments, columns_to_read);
 
     let sql_cstr = CString::new(sql)?;

@@ -54,9 +54,13 @@ impl LiveForever {
         arguments: String,
         columns_to_read: Vec<String>,
     ) -> Result<JsValue, JsValue> {
-        let result =
-            black_magic_read::read_from_db(self.db_conn, table_name, arguments, columns_to_read)
-                .map_err(|e| JsValue::from(e.to_string()))?;
+        let result = black_magic_read::read_from_db(
+            self.db_conn,
+            table_name,            // String → impl AsRef<str>
+            &[arguments.as_str()], // single condition as a slice of &str
+            &columns_to_read,      // &Vec<String> → &[impl AsRef<str>]
+        )
+        .map_err(|e| JsValue::from(e.to_string()))?;
         let result =
             serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from(e.to_string()))?;
         Ok(result) //serde-wasm-bindgen = "0.6.5"
@@ -93,6 +97,52 @@ impl LiveForever {
 
     pub async fn delete_row(&self, table_name: String, row_id: String) -> Result<(), JsValue> {
         black_magic::delete_row(self.db_conn, &table_name, &row_id)
+            .map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn swap_columns(
+        &self,
+        table_name: String,
+        row_id_1: String,
+        row_id_2: String,
+        column: String,
+    ) -> Result<(), JsValue> {
+        let condition = format!("id = {}", row_id_1);
+        let value1 = black_magic_read::read_from_db(
+            self.db_conn,
+            &table_name,           // &String works as impl AsRef<str>
+            &[condition.as_str()], // single &str condition
+            &[column.as_str()],    // single &str column
+        )
+        .map_err(|e| JsValue::from(e.to_string()))?;
+        let value1 = value1
+            .into_iter()
+            .next()
+            .ok_or_else(|| JsValue::from("No rows returned from database"))?
+            .into_iter()
+            .next()
+            .ok_or_else(|| JsValue::from("Row has no columns"))?;
+
+        let condition2 = format!("id = {}", row_id_2);
+        let value2 = black_magic_read::read_from_db(
+            self.db_conn,
+            &table_name,
+            &[condition2.as_str()], // row_id_2 is a String; .as_str() gives &str
+            &[column.as_str()],
+        )
+        .map_err(|e| JsValue::from(e.to_string()))?;
+        let value2 = value2
+            .into_iter()
+            .next()
+            .ok_or_else(|| JsValue::from("No rows returned from database"))?
+            .into_iter()
+            .next()
+            .ok_or_else(|| JsValue::from("Row has no columns"))?;
+
+        black_magic::edit_col_in_row(self.db_conn, &table_name, &row_id_1, (&column, value2))
+            .map_err(|e| JsValue::from(e.to_string()))?;
+        black_magic::edit_col_in_row(self.db_conn, &table_name, &row_id_2, (&column, value1))
             .map_err(|e| JsValue::from(e.to_string()))?;
         Ok(())
     }
