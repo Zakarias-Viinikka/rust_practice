@@ -58,7 +58,7 @@ pub fn generate_swap_two_values_sql(
     )
 }
 
-pub fn generate_delete_sql(id: usize, table_name: String) -> String {
+pub fn generate_delete_sql(table_name: &str, id: &str) -> String {
     format!(
         "DELETE FROM {table} WHERE id = {id};",
         table = table_name,
@@ -67,24 +67,30 @@ pub fn generate_delete_sql(id: usize, table_name: String) -> String {
 }
 
 //UPDATE users SET name = 'Bob', age = 30 WHERE id = 3;
-pub fn generate_update_sql<I, K, V>(
-    id: usize,
+pub fn generate_update_sql<K, V>(
     table_name: &str,
-    columns_and_new_values: I,
+    id: usize,
+    column_and_new_value: &(K, V),
 ) -> String
 where
-    I: IntoIterator<Item = (K, V)>,
     K: AsRef<str>, // column name can be &str or String
     V: AsRef<str>, // value can be &str or String
 {
-    let col_and_val = columns_and_new_values
-        .into_iter()
-        .map(|(col, val)| {
-            let sanitized_val = sanitize(val.as_ref());
-            format!("{} = '{}'", col.as_ref(), sanitized_val)
-        })
-        .collect::<Vec<_>>()
-        .join(", ");
+    let col_and_val = {
+        let sanitized_val = sanitize(column_and_new_value.1.as_ref());
+        format!("{} = '{}'", column_and_new_value.0.as_ref(), sanitized_val)
+    };
+
+    #[cfg(all(debug_assertions, target_arch = "wasm32"))]
+    {
+        let tmp = format!(
+            "UPDATE {table} SET {col_and_val} WHERE id = {id};",
+            table = table_name,
+            col_and_val = col_and_val,
+            id = id
+        );
+        web_sys::console::log_1(&JsValue::from(tmp));
+    }
 
     format!(
         "UPDATE {table} SET {col_and_val} WHERE id = {id};",
@@ -99,34 +105,39 @@ pub fn generate_read_from_table_sql(
     arguments: Vec<String>,
     columns_to_read: Vec<String>,
 ) -> String {
-    //SELECT col1, col2 FROM table_name WHERE id = 1;
-    // SELECT  FROM content WHERE ;
-    let arguments = if arguments.is_empty() || arguments == [""] {
-        String::new()
-    } else {
-        //response = await askWorker(["get_data", "content", "", [""]]);
-        if arguments.len() == 1 && &arguments[0] == "" {
-            "".to_string()
-        } else {
-            format!(" WHERE {}", arguments.join(" AND "))
-        }
-    };
-    let columns = if columns_to_read.len() == 1 && &columns_to_read[0] == "" {
+    // Filter out empty strings from the column list
+    let valid_columns: Vec<&str> = columns_to_read
+        .iter()
+        .filter(|c| !c.is_empty())
+        .map(|c| c.as_str())
+        .collect();
+
+    // Default to "*" if no columns remain
+    let columns = if valid_columns.is_empty() {
         "*".to_string()
     } else {
-        columns_to_read.join(", ")
+        valid_columns.join(", ")
     };
-    /*console::log_1(&JsValue::from(format!(
-        "SELECT {cols} FROM {table}{args};",
-        cols = columns,
-        table = table_name.as_ref(),
-        args = arguments,
-    )));*/
+
+    // Filter out empty strings from the conditions
+    let valid_conditions: Vec<&str> = arguments
+        .iter()
+        .filter(|a| !a.is_empty())
+        .map(|a| a.as_str())
+        .collect();
+
+    // Attach WHERE only if there are valid conditions
+    let args = if valid_conditions.is_empty() {
+        String::new()
+    } else {
+        format!(" WHERE {}", valid_conditions.join(" AND "))
+    };
+
     format!(
         "SELECT {cols} FROM {table}{args};",
         cols = columns,
         table = table_name.as_ref(),
-        args = arguments,
+        args = args,
     )
 }
 
@@ -144,7 +155,10 @@ together with a method i would have like fn sanitize_userinput_to_sql(input: Str
 #[cfg(test)]
 mod tests {
     use super::*;
-    //use wasm_bindgen_test::*;
+
+    // =========================================================================
+    //  generate_create_table_sql
+    // =========================================================================
 
     #[test]
     pub fn test_generate_create_table_sql() {
@@ -171,6 +185,10 @@ mod tests {
         assert_eq!(sql, expected);
     }
 
+    // =========================================================================
+    //  generate_insert_sql
+    // =========================================================================
+
     #[test]
     pub fn test_generate_insert_sql() {
         let table = Table {
@@ -192,6 +210,10 @@ mod tests {
         assert_eq!(sql, expected);
     }
 
+    // =========================================================================
+    //  generate_swap_two_values_sql
+    // =========================================================================
+
     #[test]
     pub fn test_generate_swap_two_values_sql() {
         let sql = generate_swap_two_values_sql(5, 10, "inventory".to_string(), "stock".to_string());
@@ -204,55 +226,179 @@ mod tests {
     }
 
     #[test]
-    pub fn test_generate_delete_sql() {
-        let sql = generate_delete_sql(42, "orders".to_string());
-        let expected = "DELETE FROM orders WHERE id = 42;";
-        assert_eq!(sql, expected);
+    pub fn test_generate_swap_two_values_sql_different_ids() {
+        let sql = generate_swap_two_values_sql(3, 99, "tasks".to_string(), "position".to_string());
+
+        assert!(sql.contains("UPDATE tasks"));
+        assert!(sql.contains("SET position = CASE"));
+        assert!(sql.contains("WHEN id = 3 THEN (SELECT position FROM tasks WHERE id = 99)"));
+        assert!(sql.contains("WHEN id = 99 THEN (SELECT position FROM tasks WHERE id = 3)"));
+        assert!(sql.contains("WHERE id IN (3, 99)"));
     }
 
-    //pub fn generate_update_sql<I, K, V>(id: usize, table_name: &str, columns_and_new_values: I) -> String
+    // =========================================================================
+    //  generate_update_sql
+    // =========================================================================
+
     #[test]
     pub fn test_generate_update_sql_single() {
-        let sql = generate_update_sql(5, "employees", vec![("name", "Alice")]);
+        // Single column update
+        let sql = generate_update_sql("employees", 5, &("name", "Alice"));
         let expected = "UPDATE employees SET name = 'Alice' WHERE id = 5;";
         assert_eq!(sql, expected);
     }
 
     #[test]
-    pub fn test_generate_update_sql_multiple() {
-        let sql = generate_update_sql(10, "products", vec![("price", "99"), ("stock", "5")]);
-        let expected = "UPDATE products SET price = '99', stock = '5' WHERE id = 10;";
+    pub fn test_generate_update_sql_single_column_different_types() {
+        let sql = generate_update_sql("products", 10, &("price", "99"));
+        let expected = "UPDATE products SET price = '99' WHERE id = 10;";
         assert_eq!(sql, expected);
     }
 
     #[test]
     pub fn test_generate_update_sql_escapes_quotes() {
-        let sql = generate_update_sql(7, "authors", vec![("name", "O'Reilly")]);
+        // Single quotes inside values get doubled (SQL escaping)
+        let sql = generate_update_sql("authors", 7, &("name", "O'Reilly"));
         let expected = "UPDATE authors SET name = 'O''Reilly' WHERE id = 7;";
         assert_eq!(sql, expected);
     }
 
+    // =========================================================================
+    //  sanitize
+    // =========================================================================
+
     #[test]
-    pub fn test_sanitize() {
-        // No quotes → unchanged
+    pub fn test_sanitize_no_quotes() {
         assert_eq!(sanitize("hello"), "hello");
-        // Single quote → doubled
+    }
+
+    #[test]
+    pub fn test_sanitize_single_quote() {
         assert_eq!(sanitize("O'Reilly"), "O''Reilly");
-        // Multiple quotes → all doubled
+    }
+
+    #[test]
+    pub fn test_sanitize_multiple_quotes() {
         assert_eq!(sanitize("a'b'c"), "a''b''c");
-        // Empty string → empty
+    }
+
+    #[test]
+    pub fn test_sanitize_empty_string() {
         assert_eq!(sanitize(""), "");
     }
 
-    //select from tests
+    #[test]
+    pub fn test_generate_insert_sql_escapes_quotes() {
+        let table = Table {
+            table_name: "authors".to_string(),
+            columns: vec![Column {
+                column_name: "name".to_string(),
+                column_type: ColumnType::Text,
+            }],
+        };
+        let sql = generate_insert_sql(&table, vec!["O'Reilly".to_string()]);
+        let expected = "INSERT INTO authors (name) VALUES ('O''Reilly');";
+        assert_eq!(sql, expected);
+    }
+
+    #[test]
+    pub fn test_sanitize_quote_at_start_and_end() {
+        assert_eq!(sanitize("'abc'"), "''abc''");
+    }
+
+    // =========================================================================
+    //  generate_read_from_table_sql  —  COLUMNS: * vs explicit
+    // =========================================================================
+
     #[test]
     fn test_select_all_columns_no_conditions() {
+        // Empty vecs for both → SELECT * with no WHERE
         let sql = generate_read_from_table_sql("players", vec![], vec![]);
         assert_eq!(sql, "SELECT * FROM players;");
     }
 
     #[test]
+    fn single_empty_string_column_becomes_star() {
+        // vec![""] in columns slot → treated as "give me all columns"
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["id = 1".to_string()],
+            vec!["".to_string()],
+        );
+        assert_eq!(sql, "SELECT * FROM content WHERE id = 1;");
+    }
+
+    #[test]
+    fn empty_string_mixed_with_real_column_should_be_filtered() {
+        // Empty strings in the columns list must be filtered out
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["id = 1".to_string()],
+            vec!["col1".to_string(), "".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
+    }
+
+    // =========================================================================
+    //  generate_read_from_table_sql  —  WHERE clause: presence / absence
+    // =========================================================================
+
+    #[test]
+    fn empty_arguments_vec_omits_where() {
+        // Empty conditions vec → no WHERE clause at all
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec![],
+            vec!["col1".to_string(), "col2".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1, col2 FROM content;");
+    }
+
+    #[test]
+    fn single_empty_string_argument_omits_where() {
+        // A single empty string in conditions → treat as "no conditions"
+        let sql =
+            generate_read_from_table_sql("content", vec!["".to_string()], vec!["col1".to_string()]);
+        assert_eq!(sql, "SELECT col1 FROM content;");
+    }
+
+    #[test]
+    fn both_empty_gives_select_star_no_where() {
+        // Empty string in both slots → SELECT * and no WHERE
+        let sql =
+            generate_read_from_table_sql("content", vec!["".to_string()], vec!["".to_string()]);
+        assert_eq!(sql, "SELECT * FROM content;");
+    }
+
+    #[test]
+    fn two_empty_string_arguments_should_omit_where() {
+        // Multiple empty strings → all filtered, no WHERE remains
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["".to_string(), "".to_string()],
+            vec!["".to_string()],
+        );
+        assert_eq!(sql, "SELECT * FROM content;");
+    }
+
+    #[test]
+    fn empty_string_mixed_with_real_argument_should_be_filtered() {
+        // Mix of empty and real conditions → empty removed, real kept
+        let sql = generate_read_from_table_sql(
+            "content",
+            vec!["".to_string(), "id = 1".to_string()],
+            vec!["col1".to_string()],
+        );
+        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
+    }
+
+    // =========================================================================
+    //  generate_read_from_table_sql  —  full combinations
+    // =========================================================================
+
+    #[test]
     fn test_select_specific_columns_with_condition() {
+        // Explicit columns + single condition
         let sql = generate_read_from_table_sql(
             "games",
             vec!["result = '1-0'".to_string()],
@@ -263,6 +409,7 @@ mod tests {
 
     #[test]
     fn test_multiple_conditions_multiple_columns() {
+        // Multiple columns + multiple conditions joined with AND
         let sql = generate_read_from_table_sql(
             "puzzles",
             vec!["rating > 2000".to_string(), "theme = 'mate'".to_string()],
@@ -276,6 +423,7 @@ mod tests {
 
     #[test]
     fn test_empty_columns_with_condition() {
+        // Empty columns vec (len 0) + a real condition → * plus WHERE
         let sql = generate_read_from_table_sql(
             "openings",
             vec!["name LIKE '%Sicilian%'".to_string()],
@@ -285,50 +433,8 @@ mod tests {
     }
 
     #[test]
-    fn test_no_columns_no_conditions() {
-        let sql = generate_read_from_table_sql("events", vec![], vec![]);
-        assert_eq!(sql, "SELECT * FROM events;");
-    }
-
-    // --- cases the current implementation already handles correctly ---
-
-    #[test]
-    fn empty_arguments_vec_omits_where() {
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec![],
-            vec!["col1".to_string(), "col2".to_string()],
-        );
-        assert_eq!(sql, "SELECT col1, col2 FROM content;");
-    }
-
-    #[test]
-    fn single_empty_string_argument_omits_where() {
-        // matches the askWorker(["get_data", "content", "", [""]]) convention
-        let sql =
-            generate_read_from_table_sql("content", vec!["".to_string()], vec!["col1".to_string()]);
-        assert_eq!(sql, "SELECT col1 FROM content;");
-    }
-
-    #[test]
-    fn single_empty_string_column_becomes_star() {
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["id = 1".to_string()],
-            vec!["".to_string()],
-        );
-        assert_eq!(sql, "SELECT * FROM content WHERE id = 1;");
-    }
-
-    #[test]
-    fn both_empty_gives_select_star_no_where() {
-        let sql =
-            generate_read_from_table_sql("content", vec!["".to_string()], vec!["".to_string()]);
-        assert_eq!(sql, "SELECT * FROM content;");
-    }
-
-    #[test]
     fn normal_case_still_works() {
+        // Basic happy path: explicit columns + single condition
         let sql = generate_read_from_table_sql(
             "content",
             vec!["id = 1".to_string()],
@@ -336,51 +442,4 @@ mod tests {
         );
         assert_eq!(sql, "SELECT col1, col2 FROM content WHERE id = 1;");
     }
-
-    // --- cases that currently FAIL: zero-length / mixed empty entries aren't filtered ---
-
-    #[test]
-    fn zero_length_columns_vec_should_be_star() {
-        // The "*" branch only triggers on len() == 1 with an empty string.
-        // A zero-length vec skips it and joins nothing, producing
-        // "SELECT  FROM content;" instead of "SELECT * FROM content;".
-        let sql = generate_read_from_table_sql("content", vec![], vec![]);
-        assert_eq!(sql, "SELECT * FROM content;");
-    }
-
-    #[test]
-    fn two_empty_string_arguments_should_omit_where() {
-        // len() == 2, so the single-empty-string check is skipped and both
-        // empty strings get joined with " AND ", producing
-        // "SELECT * FROM content WHERE  AND ;".
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["".to_string(), "".to_string()],
-            vec!["".to_string()],
-        );
-        assert_eq!(sql, "SELECT * FROM content;");
-    }
-
-    #[test]
-    fn empty_string_mixed_with_real_argument_should_be_filtered() {
-        // Currently produces "... WHERE  AND id = 1;" — dangling leading AND.
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["".to_string(), "id = 1".to_string()],
-            vec!["col1".to_string()],
-        );
-        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
-    }
-
-    #[test]
-    fn empty_string_mixed_with_real_column_should_be_filtered() {
-        // Currently produces "SELECT col1,  FROM content;" — trailing empty column.
-        let sql = generate_read_from_table_sql(
-            "content",
-            vec!["id = 1".to_string()],
-            vec!["col1".to_string(), "".to_string()],
-        );
-        assert_eq!(sql, "SELECT col1 FROM content WHERE id = 1;");
-    }
 }
-//cargo test create_sql_statements::

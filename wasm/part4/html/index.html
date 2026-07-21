@@ -22,31 +22,32 @@
         <button onclick="doCheck()">Check table</button>
     </section>
     <section>
-        <h2>target row</h2>
-        <input id="row-table" placeholder="table name">
-        <input id="row-pk" placeholder="pk column">
-        <input id="row-id" placeholder="row id">
-    </section>
-    <section>
         <h2>edit</h2>
-        <input id="edit-col" placeholder="column id">
-        <input id="edit-val" placeholder="new value">
+        <!--
+        const id = document.getElementById('edit-row-id').value;
+        const col = document.getElementById('edit-col').value;
+        const val = document.getElementById('edit-val').value;
+        -->
+        <input id="edit-row-id" placeholder="row id"
+               oninput="localStorage.setItem('edit-row-id', this.value)">
+        <input id="edit-col" placeholder="column name"
+               oninput="localStorage.setItem('edit-col', this.value)">
+        <input id="edit-val" placeholder="new value"
+               oninput="localStorage.setItem('edit-val', this.value)">
         <button onclick="doEdit()">Edit row</button>
     </section>
     <section>
         <h2>delete</h2>
+        <input id="delete-row-id" placeholder="row id"
+               oninput="localStorage.setItem('delete-row-id', this.value)">
         <button class="danger" onclick="doDelete()">Delete row</button>
-    </section>
-    <section>
-        <h2>export</h2>
-        <button onclick="doExport()">Export db</button>
     </section>
     </div>
     <div class="output-row">
     <div id="table_dump" class="table-dumb"></div>
     <div id="log"></div>
     </div>
-
+<script src="cache.js"></script>
 <script type="module">
 const myWorker = new Worker('./worker.js', { type: 'module' });
 
@@ -140,40 +141,23 @@ window.doEdit = async () => {
   pub async fn edit_col_in_row(
       &self,
       table_name: String,
-      pk_col: String,
       row_id: String,
       column: String,
-      new_value: String,
-  ) -> Result<(), JsValue> {
-      black_magic::edit_col_in_row(
-          self.db_conn,
-          &table_name,
-          &pk_col,
-          &row_id,
-          &column,
-          &new_value,
-      )
-      .map_err(|e| JsValue::from(e.to_string()))?;
-      Ok(())
-  } */
-  const table = document.getElementById('row-table').value;
-  const pk = document.getElementById('row-pk').value;
-  const id = document.getElementById('row-id').value;
+      value: String,
+  ) */
+  const table = document.getElementById('read-table').value;
+  const id = document.getElementById('edit-row-id').value;
   const col = document.getElementById('edit-col').value;
   const val = document.getElementById('edit-val').value;
-  log('edit', await ask(["edit_row", table, pk, id, col, val]));
+  log('edit', await ask(["edit_row", table, id, col, val]));
 };
 
 window.doDelete = async () => {
-  const table = document.getElementById('row-table').value;
-  const pk = document.getElementById('row-pk').value;
-  const id = document.getElementById('row-id').value;
-  log('delete', await ask(["delete_row", table, pk, id]));
+  const table = document.getElementById('read-table').value;
+  const id = document.getElementById('delete-row-id').value;
+  log('delete', await ask(["delete_row", table, id]));
 };
 
-window.doExport = async () => {
-  log('export', await ask(["export_db"]));
-};
 </script>
 </body>
 </html>

@@ -26,18 +26,24 @@ const handlers = {
     await db_manager.insert_data(msg[1], msg[2]);
     return `inserted: ${msg[1]} and ${msg[2]}`;
   },
-  // msg: ["edit_row", table_name, pk_col, row_id, column, new_value]
-  edit_row: async (msg) => {
-    await db_manager.edit_col_in_row(msg[1], msg[2], msg[3], msg[4], msg[5]);
+  // msg: ["edit_row", table_name, row_id, column, new_value]
+  edit_row: async (msg) => { //log('edit', await ask(["edit_row", table, id, col, val]));
+    /*
+    pub async fn edit_col_in_row(
+        &self,
+        table_name: String,
+        row_id: String,
+        column: String,
+        value: String,
+    ) */
+    await db_manager.edit_col_in_row(msg[1], msg[2], msg[3], msg[4]);
     return "ok";
   },
-  // msg: ["delete_row", table_name, pk_col, row_id]
+  // msg: ["delete_row", table_name, row_id]
   delete_row: async (msg) => {
-    await db_manager.delete_row(msg[1], msg[2], msg[3]);
+    await db_manager.delete_row(msg[1], msg[2]);
     return "ok";
   },
-  // returns raw db bytes; the main thread builds the download from them
-  export_db: () => db_manager.export_db_as_file(),
 };
 
 self.onmessage = async (e) => {

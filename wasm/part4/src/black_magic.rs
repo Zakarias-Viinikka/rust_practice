@@ -160,15 +160,14 @@ pub fn table_shape(db_conn: *mut ffi::sqlite3, table_name: &str) -> Result<Vec<S
 pub fn edit_col_in_row(
     db: *mut ffi::sqlite3,
     table_name: &str,
-    identifier_arg: &str,
-    column: &str,
-    new_value: &str,
+    row: &str,
+    column_and_new_value: (String, String),
 ) -> Result<()> {
     if db.is_null() {
         bail!("db pointer is null");
     }
 
-    let sql = format!("UPDATE {table_name} SET {column} = ?1 WHERE {pk_col} = ?2;");
+    let sql = generate_update_sql(table_name, row.parse()?, &column_and_new_value);
     let sql_cstr = CString::new(sql)?;
 
     let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
@@ -179,8 +178,8 @@ pub fn edit_col_in_row(
         bail!("prepare failed: {}", ffi::code_to_str(ret));
     }
 
-    let value_cstr = CString::new(new_value)?;
-    let id_cstr = CString::new(row_id)?;
+    let value_cstr = CString::new(column_and_new_value.0)?;
+    let id_cstr = CString::new(column_and_new_value.1)?;
     unsafe {
         ffi::sqlite3_bind_text(stmt, 1, value_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
         ffi::sqlite3_bind_text(stmt, 2, id_cstr.as_ptr(), -1, ffi::SQLITE_TRANSIENT());
@@ -196,17 +195,12 @@ pub fn edit_col_in_row(
     Ok(())
 }
 
-pub fn delete_row(
-    db: *mut ffi::sqlite3,
-    table_name: &str,
-    pk_col: &str,
-    row_id: &str,
-) -> Result<()> {
+pub fn delete_row(db: *mut ffi::sqlite3, table_name: &str, row_id: &str) -> Result<()> {
     if db.is_null() {
         bail!("db pointer is null");
     }
 
-    let sql = format!("DELETE FROM {table_name} WHERE {pk_col} = ?1;");
+    let sql = generate_delete_sql(table_name, row_id); //format!("DELETE FROM {table_name} WHERE {pk_col} = ?1;");
     let sql_cstr = CString::new(sql)?;
 
     let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
@@ -230,31 +224,4 @@ pub fn delete_row(
     }
 
     Ok(())
-}
-
-pub fn export_db_as_file(db: *mut ffi::sqlite3) -> Result<Vec<u8>> {
-    if db.is_null() {
-        bail!("db pointer is null");
-    }
-
-    let schema = CString::new("main")?;
-    let mut size: ffi::sqlite3_int64 = 0;
-
-    // SAFETY: db is a valid open connection; schema is a valid nul-terminated
-    // string; size is a valid out-pointer.
-    let data_ptr = unsafe { ffi::sqlite3_serialize(db, schema.as_ptr(), &mut size, 0) };
-    if data_ptr.is_null() {
-        bail!("sqlite3_serialize failed (out of memory or empty db)");
-    }
-
-    // SAFETY: data_ptr is non-null and valid for `size` bytes on success.
-    let bytes = unsafe { std::slice::from_raw_parts(data_ptr, size as usize) }.to_vec();
-
-    // SAFETY: we own this buffer (no SQLITE_SERIALIZE_NOCOPY was passed),
-    // and we've already copied it into `bytes`, so it's safe to free now.
-    unsafe {
-        ffi::sqlite3_free(data_ptr as *mut std::os::raw::c_void);
-    }
-
-    Ok(bytes)
 }
