@@ -2,12 +2,91 @@
 swapping to cols in different rows.
 
 todo:
-*edit_col_in_row //check this one works and stuff. havent tested it and stuff yet. <-- currently in the middle of this
-    :ai wrote some weird thing for the actual parameters it takes in, i gotta change that also need to write the create_sql_statement for it.
-    update exists, but i gotta make sure it's actually the correct one? idk. just gotta make sure it matches my black_magic_read and check if that one is even using my
-    sql_statement creater thing
-*delete row //check this one works and stuff too
-*edit rows //check if it works
+[
+RUST — LIB.RS
+=============
+
+ACTION REQUIRED: Give ColumnDef a permanent home and import it into both
+black_magic.rs and create_sql_statements.rs.
+
+UPDATE: The new() method currently calls the old create_table(db_conn, &table)
+using the old Table struct. This does not match the new signature, so
+you must fix the call site to align with the updated function.
+
+ADD: Paste in the five new public methods:
+create_table, delete_table, create_index, list_tables, and insert_data.
+
+WARNING: Within insert_data, you will see a call to
+black_magic::insert_data_dynamic. That name is only a placeholder.
+Rename it to match whatever final name you choose (I used simply
+"insert_data" in the actual black_magic body) and update the call
+site accordingly.
+
+RUST — BLACK_MAGIC.RS
+=====================
+
+REPLACE: The old create_table function (which contained inline SQL) with the
+new version that now calls generate_create_table_sql.
+
+REPLACE: The old insert_into_table function with the new insert_data, which
+accepts name/value pairs.
+
+ADD: The new create_index function.
+
+ADD: The new list_tables function.
+
+RUST — CREATE_SQL_STATEMENTS.RS
+===============================
+
+REPLACE: generate_create_table_sql with the new signature:
+(table_name: &str, columns: &[ColumnDef]).
+
+REPLACE: generate_insert_sql with the new signature:
+(table_name: &str, values: Vec<(String, String)>).
+
+SWAP IN: The new create_table_dynamic_tests module and remove the old
+test_generate_create_table_sql.
+
+SWAP IN: The new test_generate_insert_sql,
+test_generate_insert_sql_escapes_quotes, and
+test_generate_insert_sql_table_name_is_not_hardcoded.
+Remove the two old insert tests that used Table and Column.
+
+WORKER.JS
+=========
+
+PASTE IN: The five new handler entries:
+create_table, delete_table, create_index, list_tables, insert_data.
+
+UPDATE: The existing insert_data handler currently calls
+db_manager.insert_data(msg[1], msg[2]) with two raw strings.
+The new signature is (table_name, values) where "values" is an
+array of [col, val] pairs — adjust the call accordingly.
+
+DOUBLE-CHECK: Verify that the method names defined on LiveForever exactly
+match the names you have used in your handlers.
+
+FRONTEND FILES
+==============
+
+DROP IN: index.html, cache.js, and style.css from this chat.
+
+FLAGGED — NOT YET DONE: doInsert() inside index.html still calls
+ask(["insert_data", a, b]) with two bare fields.
+It now requires a table name and the new pairs
+format because insert is no longer hardcoded to
+"content". This update is pending.
+
+REMOVE: cache.js is now dead weight because list_tables has replaced its
+previous purpose. Drop the <script> tag for cache.js unless you
+are using it elsewhere.
+
+ONCE COMBINED
+=============
+
+COMPILE the project and fix any breakage that appears at the call sites
+mentioned above.
+
+RUN the updated test module to verify everything works correctly.
+]
 *tests
-*make it so sorting by "position in list" is efficient
-*either export the db or figure out how to show all of it's info on a page u can just open so it's easy to analyze what the db looks like.

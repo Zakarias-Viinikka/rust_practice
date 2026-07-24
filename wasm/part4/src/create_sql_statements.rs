@@ -1,41 +1,54 @@
+use crate::create_table_col_def::ColumnDef;
 use crate::db_table::*;
 use wasm_bindgen::{JsCast, JsValue};
 use web_sys::console;
 
-pub fn generate_create_table_sql(table: &Table) -> String {
-    let mut cols = vec!["id INTEGER PRIMARY KEY AUTOINCREMENT".to_string()];
-    cols.extend(
-        table
-            .columns
-            .iter()
-            .filter(|c| c.column_name != "id")
-            .map(|c| format!("{} {}", c.column_name, c.column_type.as_str())),
-    );
-
+// Builds CREATE TABLE SQL from a caller-supplied column list (replaces the old Table/Column version).
+pub fn generate_create_table_sql(table_name: &str, columns: &[ColumnDef]) -> String {
+    let mut col_defs = Vec::new();
+    for col in columns {
+        let mut def = format!("{} {}", col.0, col.1);
+        if col.2 {
+            def.push_str(" PRIMARY KEY");
+        }
+        if col.6 {
+            def.push_str(" AUTOINCREMENT");
+        }
+        if col.3 {
+            def.push_str(" NOT NULL");
+        }
+        if col.4 {
+            def.push_str(" UNIQUE");
+        }
+        if !col.5.is_empty() {
+            def.push_str(&format!(" DEFAULT {}", col.5));
+        }
+        col_defs.push(def);
+    }
     format!(
         "CREATE TABLE IF NOT EXISTS {} ({});",
-        table.table_name,
-        cols.join(", ")
+        table_name,
+        col_defs.join(", ")
     )
 }
 
-pub fn generate_insert_sql(table: &Table, values: Vec<String>) -> String {
+// Builds INSERT SQL from (column, value) pairs - replaces the old positional
+// Table/Vec<String> version. Order comes from the pairs themselves, not two
+// separately-ordered lists, so columns and values can't drift apart.
+pub fn generate_insert_sql(table_name: &str, values: Vec<(String, String)>) -> String {
+    let columns: Vec<String> = values.iter().map(|(col, _)| col.clone()).collect();
     let quoted_values: Vec<String> = values
         .iter()
-        .map(|v| format!("'{}'", sanitize(v.as_ref())))
+        .map(|(_, val)| format!("'{}'", sanitize(val)))
         .collect();
     format!(
         "INSERT INTO {} ({}) VALUES ({});",
-        table.table_name,
-        table
-            .columns
-            .iter()
-            .map(|c| c.column_name.clone())
-            .collect::<Vec<_>>()
-            .join(", "),
+        table_name,
+        columns.join(", "),
         quoted_values.join(", ")
     )
 }
+
 pub fn generate_swap_two_values_sql(
     id1: usize,
     id2: usize,
@@ -158,54 +171,210 @@ mod tests {
     //  generate_create_table_sql
     // =========================================================================
 
-    #[test]
-    pub fn test_generate_create_table_sql() {
-        let table = Table {
-            table_name: "employees".to_string(),
-            columns: vec![
-                Column {
-                    column_name: "emp_id".to_string(),
-                    column_type: ColumnType::Integer,
-                },
-                Column {
-                    column_name: "first_name".to_string(),
-                    column_type: ColumnType::Text,
-                },
-                Column {
-                    column_name: "salary".to_string(),
-                    column_type: ColumnType::Real,
-                },
-            ],
-        };
+    #[cfg(test)]
+    mod create_table_dynamic_tests {
+        use super::*;
 
-        let sql = generate_create_table_sql(&table);
-        let expected = "CREATE TABLE IF NOT EXISTS employees (id INTEGER PRIMARY KEY AUTOINCREMENT, emp_id INTEGER, first_name TEXT, salary REAL);";
-        assert_eq!(sql, expected);
+        fn col(
+            name: &str,
+            col_type: &str,
+            pk: bool,
+            not_null: bool,
+            unique: bool,
+            default: &str,
+            autoinc: bool,
+            indexed: bool,
+        ) -> ColumnDef {
+            ColumnDef(
+                name.to_string(),
+                col_type.to_string(),
+                pk,
+                not_null,
+                unique,
+                default.to_string(),
+                autoinc,
+                indexed,
+            )
+        }
+
+        // A column with every flag off should emit just "name TYPE", nothing else.
+        #[test]
+        fn plain_column_no_constraints() {
+            let columns = vec![col("name", "TEXT", false, false, false, "", false, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(sql, "CREATE TABLE IF NOT EXISTS users (name TEXT);");
+        }
+
+        // PRIMARY KEY with autoincrement off should emit PRIMARY KEY only, no AUTOINCREMENT.
+        #[test]
+        fn primary_key_alone_without_autoincrement() {
+            let columns = vec![col("id", "INTEGER", true, false, false, "", false, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY);"
+            );
+        }
+
+        // PRIMARY KEY + autoincrement both on should emit both keywords, in that order.
+        #[test]
+        fn primary_key_with_autoincrement() {
+            let columns = vec![col("id", "INTEGER", true, false, false, "", true, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT);"
+            );
+        }
+
+        // Autoincrement on but PRIMARY KEY off - confirms the function doesn't silently
+        // add PRIMARY KEY on its own; it just reflects whatever flags it was given
+        // (even though this combo is invalid SQLite and would error at execution).
+        #[test]
+        fn autoincrement_without_primary_key_does_not_appear() {
+            let columns = vec![col("id", "INTEGER", false, false, false, "", true, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (id INTEGER AUTOINCREMENT);"
+            );
+        }
+
+        // NOT NULL flag alone should append "NOT NULL" and nothing else.
+        #[test]
+        fn not_null_flag() {
+            let columns = vec![col("email", "TEXT", false, true, false, "", false, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (email TEXT NOT NULL);"
+            );
+        }
+
+        // UNIQUE flag alone should append "UNIQUE" and nothing else.
+        #[test]
+        fn unique_flag() {
+            let columns = vec![col("email", "TEXT", false, false, true, "", false, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(sql, "CREATE TABLE IF NOT EXISTS users (email TEXT UNIQUE);");
+        }
+
+        // A non-empty default value should produce "DEFAULT <value>".
+        #[test]
+        fn default_value_present() {
+            let columns = vec![col(
+                "status", "TEXT", false, false, false, "active", false, false,
+            )];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (status TEXT DEFAULT active);"
+            );
+        }
+
+        // An empty-string default means "no default was set" - DEFAULT must not appear at all.
+        #[test]
+        fn empty_default_string_omits_default_clause() {
+            let columns = vec![col("status", "TEXT", false, false, false, "", false, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert!(!sql.contains("DEFAULT"));
+        }
+
+        // The "indexed" flag is handled separately via CREATE INDEX, not this function -
+        // toggling it on/off should produce byte-identical SQL either way.
+        #[test]
+        fn indexed_flag_has_no_effect_on_create_table_sql() {
+            let indexed_col = col("email", "TEXT", false, false, false, "", false, true);
+            let not_indexed_col = col("email", "TEXT", false, false, false, "", false, false);
+            let sql_a = generate_create_table_sql("users", &[indexed_col]);
+            let sql_b = generate_create_table_sql("users", &[not_indexed_col]);
+            assert_eq!(sql_a, sql_b);
+        }
+
+        // All constraints on at once - checks the exact keyword ordering the function produces.
+        #[test]
+        fn all_constraints_combined_in_correct_order() {
+            let columns = vec![col("id", "INTEGER", true, true, true, "1", true, false)];
+            let sql = generate_create_table_sql("users", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE DEFAULT 1);"
+            );
+        }
+
+        // Multiple columns should be comma-joined in the same order they were passed in.
+        #[test]
+        fn multiple_columns_joined_with_commas() {
+            let columns = vec![
+                col("id", "INTEGER", true, false, false, "", true, false),
+                col("name", "TEXT", false, true, false, "", false, false),
+                col("age", "INTEGER", false, false, false, "0", false, false),
+            ];
+            let sql = generate_create_table_sql("people", &columns);
+            assert_eq!(
+                sql,
+                "CREATE TABLE IF NOT EXISTS people (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER DEFAULT 0);"
+            );
+        }
+
+        // Two different table names with the same columns must produce different SQL -
+        // guards against the table name being accidentally hardcoded inside the function.
+        #[test]
+        fn table_name_is_not_hardcoded() {
+            let columns = vec![col("x", "TEXT", false, false, false, "", false, false)];
+            let sql_a = generate_create_table_sql("alpha", &columns);
+            let sql_b = generate_create_table_sql("beta", &columns);
+            assert!(sql_a.contains("alpha"));
+            assert!(sql_b.contains("beta"));
+            assert_ne!(sql_a, sql_b);
+        }
+
+        // No columns at all should still produce valid-shaped SQL with empty parens,
+        // not panic or produce malformed output.
+        #[test]
+        fn empty_column_list_produces_empty_parens() {
+            let sql = generate_create_table_sql("empty_table", &[]);
+            assert_eq!(sql, "CREATE TABLE IF NOT EXISTS empty_table ();");
+        }
     }
 
     // =========================================================================
     //  generate_insert_sql
     // =========================================================================
 
+    // Basic case: column names and values come from the same pairs, in the
+    // order the pairs were given - confirms nothing gets silently reordered.
     #[test]
     pub fn test_generate_insert_sql() {
-        let table = Table {
-            table_name: "products".to_string(),
-            columns: vec![
-                Column {
-                    column_name: "product_id".to_string(),
-                    column_type: ColumnType::Integer,
-                },
-                Column {
-                    column_name: "product_name".to_string(),
-                    column_type: ColumnType::Text,
-                },
-            ],
-        };
-        let values = vec!["100".to_string(), "Laptop".to_string()];
-        let sql = generate_insert_sql(&table, values);
+        let values = vec![
+            ("product_id".to_string(), "100".to_string()),
+            ("product_name".to_string(), "Laptop".to_string()),
+        ];
+        let sql = generate_insert_sql("products", values);
         let expected = "INSERT INTO products (product_id, product_name) VALUES ('100', 'Laptop');";
         assert_eq!(sql, expected);
+    }
+
+    // A single quote inside a value must be escaped (doubled), same as every
+    // other sanitize()-backed generator in this file.
+    #[test]
+    pub fn test_generate_insert_sql_escapes_quotes() {
+        let values = vec![("name".to_string(), "O'Reilly".to_string())];
+        let sql = generate_insert_sql("authors", values);
+        let expected = "INSERT INTO authors (name) VALUES ('O''Reilly');";
+        assert_eq!(sql, expected);
+    }
+
+    // Table name must actually be used, not hardcoded - two different table
+    // names with the same pairs should produce different SQL.
+    #[test]
+    pub fn test_generate_insert_sql_table_name_is_not_hardcoded() {
+        let values = vec![("x".to_string(), "1".to_string())];
+        let sql_a = generate_insert_sql("alpha", values.clone());
+        let sql_b = generate_insert_sql("beta", values);
+        assert!(sql_a.contains("alpha"));
+        assert!(sql_b.contains("beta"));
+        assert_ne!(sql_a, sql_b);
     }
 
     // =========================================================================
@@ -283,20 +452,6 @@ mod tests {
     #[test]
     pub fn test_sanitize_empty_string() {
         assert_eq!(sanitize(""), "");
-    }
-
-    #[test]
-    pub fn test_generate_insert_sql_escapes_quotes() {
-        let table = Table {
-            table_name: "authors".to_string(),
-            columns: vec![Column {
-                column_name: "name".to_string(),
-                column_type: ColumnType::Text,
-            }],
-        };
-        let sql = generate_insert_sql(&table, vec!["O'Reilly".to_string()]);
-        let expected = "INSERT INTO authors (name) VALUES ('O''Reilly');";
-        assert_eq!(sql, expected);
     }
 
     #[test]

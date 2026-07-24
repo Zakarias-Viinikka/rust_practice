@@ -1,10 +1,13 @@
 mod black_magic;
 mod black_magic_read;
 mod create_sql_statements;
+mod create_table_col_def;
 mod db_table;
 mod utils;
 
-use serde_wasm_bindgen::to_value;
+use create_table_col_def::ColumnDef;
+
+//use serde_wasm_bindgen::to_value;
 use sqlite_wasm_rs::{self as ffi};
 use wasm_bindgen::prelude::*;
 
@@ -35,7 +38,7 @@ impl LiveForever {
                 },
             ],
         };
-        black_magic::create_table(db_conn, &table)
+        black_magic::create_table(db_conn, &table.table_name, table.columns)
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(LiveForever {
             db_conn: db_conn,
@@ -67,9 +70,10 @@ impl LiveForever {
     }
 
     //console.log(state.change_data("new data"));
-    pub async fn insert_data(&mut self, text: String, meta_data: String) -> Result<(), JsValue> {
-        let values = vec![text, meta_data];
-        black_magic::insert_into_table(self.db_conn, &self.table, values)
+    pub async fn insert_data(&self, table_name: String, values: JsValue) -> Result<(), JsValue> {
+        let values: Vec<(String, String)> =
+            serde_wasm_bindgen::from_value(values).map_err(|e| JsValue::from(e.to_string()))?;
+        black_magic::insert_into_table(self.db_conn, &table_name, values) // PLACEHOLDER - doesn't exist yet
             .map_err(|e| JsValue::from(e.to_string()))?;
         Ok(())
     }
@@ -145,6 +149,33 @@ impl LiveForever {
         black_magic::edit_col_in_row(self.db_conn, &table_name, &row_id_2, (&column, value1))
             .map_err(|e| JsValue::from(e.to_string()))?;
         Ok(())
+    }
+
+    pub async fn create_table(&self, table_name: String, columns: JsValue) -> Result<(), JsValue> {
+        let columns: Vec<ColumnDef> =
+            serde_wasm_bindgen::from_value(columns).map_err(|e| JsValue::from(e.to_string()))?;
+        black_magic::create_table(self.db_conn, &table_name, columns) // PLACEHOLDER - doesn't exist yet
+            .map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn delete_table(&self, table_name: String) -> Result<(), JsValue> {
+        black_magic::drop_table(self.db_conn, &table_name)?; // already exists
+        Ok(())
+    }
+
+    pub async fn create_index(
+        &self,
+        table_name: String,
+        column_name: String,
+    ) -> Result<(), JsValue> {
+        black_magic::create_index(self.db_conn, &table_name, &column_name) // PLACEHOLDER - doesn't exist yet
+            .map_err(|e| JsValue::from(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn list_tables(&self) -> Result<Vec<String>, JsValue> {
+        black_magic::list_tables(self.db_conn)
     }
 }
 

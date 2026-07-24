@@ -49,6 +49,28 @@ const handlers = {
     await db_manager.swap_columns(msg[1], msg[2], msg[3], msg[4]);
     return "ok";
   },
+
+  // msg: ["create_table", table_name, columns]
+  // columns: array of [name, type, primaryKey, notNull, unique, defaultValue, autoincrement, indexed]
+  create_table: async (msg) => {
+    await db_manager.create_table(msg[1], msg[2]);
+    return `created table: ${msg[1]}`;
+  },
+
+  // msg: ["delete_table", table_name]
+  delete_table: async (msg) => {
+    await db_manager.delete_table(msg[1]);
+    return `deleted table: ${msg[1]}`;
+  },
+
+  // msg: ["create_index", table_name, column_name]
+  create_index: async (msg) => {
+    await db_manager.create_index(msg[1], msg[2]);
+    return `indexed ${msg[2]} on ${msg[1]}`;
+  },
+
+  // msg: ["list_tables"]
+  list_tables: async () => db_manager.list_tables(),
 };
 
 self.onmessage = async (e) => {

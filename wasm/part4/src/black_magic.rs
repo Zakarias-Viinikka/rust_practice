@@ -38,8 +38,39 @@ pub async fn create_local_db_connection(filename: &str) -> Result<*mut ffi::sqli
     Ok(db)
 }
 
-pub fn create_table(db: *mut ffi::sqlite3, table: &Table) -> Result<()> {
-    let sql = generate_create_table_sql(table);
+// Builds a table from a caller-supplied column list — replaces the old
+// fixed Table/Column version. Caller decides every column + constraint.
+use crate::create_table_col_def::ColumnDef;
+pub fn create_table(
+    db: *mut ffi::sqlite3,
+    table_name: &str,
+    columns: Vec<ColumnDef>,
+) -> Result<()> {
+    let mut col_defs = Vec::new();
+    for col in &columns {
+        let mut def = format!("{} {}", col.0, col.1);
+        if col.2 {
+            def.push_str(" PRIMARY KEY");
+        }
+        if col.6 {
+            def.push_str(" AUTOINCREMENT");
+        }
+        if col.3 {
+            def.push_str(" NOT NULL");
+        }
+        if col.4 {
+            def.push_str(" UNIQUE");
+        }
+        if !col.5.is_empty() {
+            def.push_str(&format!(" DEFAULT {}", col.5));
+        }
+        col_defs.push(def);
+    }
+    let sql = format!(
+        "CREATE TABLE IF NOT EXISTS {} ({});",
+        table_name,
+        col_defs.join(", ")
+    );
     let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
     unsafe {
         let ret = ffi::sqlite3_exec(
@@ -52,14 +83,39 @@ pub fn create_table(db: *mut ffi::sqlite3, table: &Table) -> Result<()> {
         if ret != ffi::SQLITE_OK {
             bail!("Failed to create table: {}", ffi::code_to_str(ret));
         }
-        //log!("Table created");
         Ok(())
     }
 }
 
-pub fn insert_into_table(db: *mut ffi::sqlite3, table: &Table, values: Vec<String>) -> Result<()> {
-    let sql = generate_insert_sql(table, values);
-    let sql_cstr = CString::new(sql)?;
+// Adds an index on one column so sorting/filtering by it doesn't full-scan.
+pub fn create_index(db: *mut ffi::sqlite3, table_name: &str, column_name: &str) -> Result<()> {
+    let sql = format!(
+        "CREATE INDEX IF NOT EXISTS idx_{}_{} ON {}({});",
+        table_name, column_name, table_name, column_name
+    );
+    let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
+    unsafe {
+        let ret = ffi::sqlite3_exec(
+            db,
+            sql_cstr.as_ptr().cast(),
+            None,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+        );
+        if ret != ffi::SQLITE_OK {
+            bail!("Failed to create index: {}", ffi::code_to_str(ret));
+        }
+        Ok(())
+    }
+}
+
+pub fn insert_into_table(
+    db: *mut ffi::sqlite3,
+    table_name: &str,
+    values: Vec<(String, String)>,
+) -> Result<()> {
+    let sql = generate_insert_sql(table_name, values);
+    let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
     unsafe {
         let ret = ffi::sqlite3_exec(
             db,
@@ -227,4 +283,55 @@ pub fn delete_row(db: *mut ffi::sqlite3, table_name: &str, row_id: &str) -> Resu
     }
 
     Ok(())
+}
+
+pub fn list_tables(db_conn: *mut ffi::sqlite3) -> Result<Vec<String>, JsValue> {
+    let sql = "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';";
+    let c_sql = CString::new(sql).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let mut stmt: *mut ffi::sqlite3_stmt = std::ptr::null_mut();
+    // SAFETY: db_conn is a valid open connection, c_sql is a valid nul-terminated
+    // string, and stmt is a valid out-pointer for prepare_v2 to write into.
+    let ret = unsafe {
+        ffi::sqlite3_prepare_v2(db_conn, c_sql.as_ptr(), -1, &mut stmt, std::ptr::null_mut())
+    };
+    if ret != ffi::SQLITE_OK {
+        let err = unsafe { ffi::sqlite3_errmsg(db_conn) };
+        let err_str = unsafe { std::ffi::CStr::from_ptr(err).to_string_lossy().into_owned() };
+        return Err(JsValue::from_str(&format!("Prepare failed: {}", err_str)));
+    }
+
+    let mut tables = Vec::new();
+
+    loop {
+        // SAFETY: stmt was just successfully prepared above and is not yet finalized.
+        let step_ret = unsafe { ffi::sqlite3_step(stmt) };
+        match step_ret {
+            ffi::SQLITE_ROW => {
+                // SAFETY: stmt is on a valid row; column index 0 is the only
+                // selected column (name) in this query.
+                unsafe {
+                    let name =
+                        std::ffi::CStr::from_ptr(ffi::sqlite3_column_text(stmt, 0) as *const i8)
+                            .to_string_lossy()
+                            .into_owned();
+                    tables.push(name);
+                }
+            }
+            ffi::SQLITE_DONE => break,
+            _ => {
+                let err = unsafe { ffi::sqlite3_errmsg(db_conn) };
+                let err_str =
+                    unsafe { std::ffi::CStr::from_ptr(err).to_string_lossy().into_owned() };
+                unsafe { ffi::sqlite3_finalize(stmt) };
+                return Err(JsValue::from_str(&format!("Step failed: {}", err_str)));
+            }
+        }
+    }
+
+    // SAFETY: stmt is non-null and was successfully prepared; finalize is safe
+    // to call exactly once when done stepping.
+    unsafe { ffi::sqlite3_finalize(stmt) };
+
+    Ok(tables)
 }

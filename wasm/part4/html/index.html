@@ -5,53 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>part 4</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="second_style.css">
 </head>
 <body>
     <h1><span id="status"></span>db test harness</h1>
     <div class="grid">
-    <section>
-        <h2>insert</h2>
-        <input id="ins-a" placeholder="field 1">
-        <input id="ins-b" placeholder="field 2">
-        <button onclick="doInsert()">Insert</button>
-    </section>
-    <section>
-        <h2>read</h2>
-        <input id="read-table" placeholder="table name" value="content">
-        <button onclick="doGet()">Get data</button>
-        <button onclick="doCheck()">Check table</button>
-    </section>
-    <section>
-        <h2>edit</h2>
-        <!--
-        const id = document.getElementById('edit-row-id').value;
-        const col = document.getElementById('edit-col').value;
-        const val = document.getElementById('edit-val').value;
-        -->
-        <input id="edit-row-id" placeholder="row id"
-               oninput="localStorage.setItem('edit-row-id', this.value)">
-        <input id="edit-col" placeholder="column name"
-               oninput="localStorage.setItem('edit-col', this.value)">
-        <input id="edit-val" placeholder="new value"
-               oninput="localStorage.setItem('edit-val', this.value)">
-        <button onclick="doEdit()">Edit row</button>
-    </section>
-    <section>
-        <h2>swap</h2>
-        <input id="swap-row-id-1" placeholder="row id 1"
-               oninput="localStorage.setItem('swap-row-id-1', this.value)">
-        <input id="swap-row-id-2" placeholder="row id 2"
-               oninput="localStorage.setItem('swap-row-id-2', this.value)">
-        <input id="swap-col" placeholder="column name"
-               oninput="localStorage.setItem('swap-col', this.value)">
-        <button onclick="doSwap()">Swap columns</button>
-    </section>
-    <section>
-        <h2>delete</h2>
-        <input id="delete-row-id" placeholder="row id"
-               oninput="localStorage.setItem('delete-row-id', this.value)">
-        <button class="danger" onclick="doDelete()">Delete row</button>
-    </section>
+        <section>
+            <h2>insert</h2>
+            <input id="ins-a" placeholder="field 1">
+            <input id="ins-b" placeholder="field 2">
+            <button onclick="doInsert()">Insert</button>
+        </section>
+        <section>
+            <h2>read</h2>
+            <input id="read-table" placeholder="table name" value="content">
+            <button onclick="doGet()">Get data</button>
+            <button onclick="doCheck()">Check table</button>
+        </section>
+        <section>
+            <h2>edit</h2>
+            <input id="edit-row-id" placeholder="row id"
+                oninput="localStorage.setItem('edit-row-id', this.value)">
+            <input id="edit-col" placeholder="column name"
+                oninput="localStorage.setItem('edit-col', this.value)">
+            <input id="edit-val" placeholder="new value"
+                oninput="localStorage.setItem('edit-val', this.value)">
+            <button onclick="doEdit()">Edit row</button>
+        </section>
+        <section>
+            <h2>swap</h2>
+            <input id="swap-row-id-1" placeholder="row id 1"
+                oninput="localStorage.setItem('swap-row-id-1', this.value)">
+            <input id="swap-row-id-2" placeholder="row id 2"
+                oninput="localStorage.setItem('swap-row-id-2', this.value)">
+            <input id="swap-col" placeholder="column name"
+                oninput="localStorage.setItem('swap-col', this.value)">
+            <button onclick="doSwap()">Swap columns</button>
+        </section>
+        <section>
+            <h2>delete</h2>
+            <input id="delete-row-id" placeholder="row id"
+                oninput="localStorage.setItem('delete-row-id', this.value)">
+            <button class="danger" onclick="doDelete()">Delete row</button>
+        </section>
+        <section>
+            <h2>create table</h2>
+            <input id="new-table-name" placeholder="table name">
+            <button onclick="addColumnRow()">Add column</button>
+            <div id="new-table-columns"></div>
+            <button onclick="doCreateTable()">Create table</button>
+        </section>
+        <!-- delete section -->
+        <section>
+            <h2>delete table</h2>
+            <div id="delete-table-list" class="table-chip-list"></div>
+        </section>
+        <div id="confirm-modal" class="modal-overlay hidden">
+          <div class="modal-box">
+            <p id="confirm-modal-text"></p>
+            <div class="modal-actions">
+              <button id="confirm-modal-yes" class="danger">Yes, delete</button>
+              <button id="confirm-modal-no">Cancel</button>
+            </div>
+          </div>
+        </div>
+        <!-- index section -->
+        <section>
+            <h2>index column</h2>
+            <input id="index-table" placeholder="table name">
+            <input id="index-col" placeholder="column name">
+            <button onclick="doIndexColumn()">Add index</button>
+        </section>
     </div>
     <div class="output-row">
     <div id="table_dump" class="table-dumb"></div>
@@ -71,6 +95,7 @@ document.getElementById('status').classList.add('ready');
 await ask(["initialize", "idiotmatic_db_name"]);
 
 log('ready', 'ready to do business');
+renderDeleteTableList();
 
 function ask(msg) {
   return new Promise(resolve => {
@@ -173,6 +198,108 @@ window.doDelete = async () => {
   const table = document.getElementById('read-table').value;
   const id = document.getElementById('delete-row-id').value;
   log('delete', await ask(["delete_row", table, id]));
+};
+
+//create table stuff
+
+window.addColumnRow = () => {
+  const container = document.getElementById('new-table-columns');
+  const row = document.createElement('div');
+  row.className = 'column-row';
+  row.innerHTML = `
+    <input type="text" class="col-name" placeholder="column name">
+    <select class="col-type">
+      <option value="INTEGER">INTEGER</option>
+      <option value="TEXT">TEXT</option>
+      <option value="REAL">REAL</option>
+      <option value="BLOB">BLOB</option>
+      <option value="NUMERIC">NUMERIC</option>
+    </select>
+    <label><input type="checkbox" class="col-pk"> PRIMARY KEY</label>
+    <label><input type="checkbox" class="col-notnull"> NOT NULL</label>
+    <label><input type="checkbox" class="col-unique"> UNIQUE</label>
+    <label><input type="checkbox" class="col-autoincrement"> AUTOINCREMENT</label>
+    <input type="text" class="col-default" placeholder="default value">
+    <button type="button" class="remove-column">Remove</button>
+  `;
+  row.querySelector('.remove-column').onclick = () => row.remove();
+  container.appendChild(row);
+};
+
+function collectColumns() {
+  const rows = document.querySelectorAll('#new-table-columns .column-row');
+  return Array.from(rows).map(row => [
+    row.querySelector('.col-name').value,
+    row.querySelector('.col-type').value,
+    row.querySelector('.col-pk').checked,
+    row.querySelector('.col-notnull').checked,
+    row.querySelector('.col-unique').checked,
+    row.querySelector('.col-default').value,
+    row.querySelector('.col-autoincrement').checked,
+  ]);
+}
+
+function resetCreateTableSection() {
+  document.getElementById('new-table-name').value = '';
+  document.getElementById('new-table-columns').innerHTML = '';
+}
+
+window.doCreateTable = async () => {
+  const tableName = document.getElementById('new-table-name').value;
+  const columns = collectColumns();
+
+  const result = await ask(["create_table", tableName, columns]);
+  log('create_table', result);
+
+  Cache.addTable(tableName);
+  resetCreateTableSection();
+  renderDeleteTableList();
+};
+
+//delete stuff
+function renderDeleteTableList() {
+  const container = document.getElementById('delete-table-list');
+  container.innerHTML = '';
+  Cache.getTables().forEach(name => {
+    const btn = document.createElement('button');
+    btn.className = 'table-chip';
+    btn.textContent = name;
+    btn.onclick = () => confirmDeleteTable(name);
+    container.appendChild(btn);
+  });
+}
+
+function confirmDeleteTable(name) {
+  const modal = document.getElementById('confirm-modal');
+  document.getElementById('confirm-modal-text').textContent =
+    `Delete table "${name}"? This can't be undone.`;
+  modal.classList.remove('hidden');
+
+  const yesBtn = document.getElementById('confirm-modal-yes');
+  const noBtn = document.getElementById('confirm-modal-no');
+
+  const cleanup = () => {
+    modal.classList.add('hidden');
+    yesBtn.onclick = null;
+    noBtn.onclick = null;
+  };
+
+  yesBtn.onclick = async () => {
+    cleanup();
+    const result = await ask(["delete_table", name]);
+    log('delete_table', result);
+    Cache.removeTable(name);
+    renderDeleteTableList();
+  };
+
+  noBtn.onclick = cleanup;
+}
+
+//index section
+window.doIndexColumn = async () => {
+  const table = document.getElementById('index-table').value;
+  const col = document.getElementById('index-col').value;
+  log('create_index', await ask(["create_index", table, col]));
 };
 
 </script>

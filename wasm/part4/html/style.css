@@ -1,3 +1,4 @@
+/* :root { ... } -- overwrites base :root, commented out */
 :root {
   --bg: #f7f7f5;
   --panel: #ffffff;
@@ -9,32 +10,13 @@
   --danger: #c0392b;
   --mono: "SFMono-Regular", "JetBrains Mono", Consolas, monospace;
 }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  padding: 2rem;
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.5;
-}
-h1 {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
-}
-#status {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--danger);
-  display: inline-block;
-}
-#status.ready { background: #2e8b57; }
+/* * { box-sizing: border-box; } -- overwrites base, commented out */
+/* body { ... } -- overwrites base body, commented out */
+/* h1 { ... } -- overwrites base h1, commented out */
+/* #status { ... } -- overwrites base #status, commented out */
+/* #status.ready { background: #2e8b57; } -- overwrites base #status.ready, commented out */
 
+/* .grid { ... } -- overwrites base .grid, commented out */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -42,6 +24,7 @@ h1 {
   max-width: 900px;
 }
 
+/* Not in base — keep active */
 .output-row {
   display: flex;
   gap: 1.5rem;
@@ -54,6 +37,8 @@ h1 {
   min-width: 0;
 }
 
+/* section { ... } -- overwrites base section, commented out */
+/* (the section h2 rule below is not an exact match for the base h2, so it stays) */
 section {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -68,6 +53,8 @@ section h2 {
   margin: 0 0 .75rem;
   font-weight: 600;
 }
+
+/* input alone is not an exact match (base has input, select) — keep */
 input {
   width: 100%;
   font-family: var(--mono);
@@ -79,25 +66,19 @@ input {
   background: var(--bg);
   color: var(--text);
 }
+/* input:focus alone is not an exact match — keep */
 input:focus {
   outline: 2px solid var(--accent);
   outline-offset: -1px;
 }
-button {
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 600;
-  padding: .45rem .8rem;
-  border: none;
-  border-radius: 4px;
-  background: var(--accent);
-  color: #fff;
-  cursor: pointer;
-}
-button:hover { background: var(--accent-hover); }
-button.danger { background: var(--danger); }
-button.danger:hover { background: #96261a; }
 
+/* button rules all have exact base matches — commented out */
+/* button { ... } */
+/* button:hover { ... } */
+/* button.danger { ... } */
+/* button.danger:hover { ... } */
+
+/* #log not in base — keep active */
 #log {
   max-width: 900px;
   margin-top: 1.5rem;
@@ -113,6 +94,7 @@ button.danger:hover { background: #96261a; }
 #log div { margin-bottom: .4rem; }
 #log .tag { color: #6ec1ff; }
 
+/* .table-dumb not in base — keep active */
 .table-dumb {
     max-width: 900px;
         margin-top: 1.5rem;
@@ -127,6 +109,12 @@ button.danger:hover { background: #96261a; }
         font-size: 12px;
 }
 
+/* .data-table exact match — commented out */
+/* .data-table { ... } */
+/* .data-table td and .data-table th not exact matches individually?
+   .data-table td is not exact (base has th, td combined), so it stays.
+   .data-table th is an exact match for base .data-table th — commented out. */
+
 .data-table {
   border-collapse: collapse;
   font-size: 12px;
@@ -136,8 +124,4 @@ button.danger:hover { background: #96261a; }
   padding: 2px 12px 2px 0;
 }
 
-.data-table th {
-  padding: 2px 12px 2px 0;
-  text-align: left;
-  font-weight: 600;
-}
+/* .data-table th { ... } commented out */
