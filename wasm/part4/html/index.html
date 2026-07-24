@@ -120,9 +120,10 @@ async function dumpTable() {
   renderDataToTable(table, table_data, table_shape);
 }
 
-function renderDataToTable(table, table_data, table_shape) {
+async function renderDataToTable(table, table_data, table_shape) {
   const el = document.getElementById('table_dump');
   el.innerHTML = '';
+  //const table_data = await ask(["get_data", table, "", [""]]);
   const rows = table_data[1];
   const columnNames = table_shape[1].map(info => {
     const match = info.match(/name=([^,]+)/);
@@ -156,9 +157,11 @@ function renderDataToTable(table, table_data, table_shape) {
 
 
 window.doInsert = async () => {
+  //Vec<(String, String)>
+  const table_name = document.getElementById('read-table').value;
   const a = document.getElementById('ins-a').value;
   const b = document.getElementById('ins-b').value;
-  log('insert', await ask(["insert_data", a, b]));
+  log('insert', await ask(["insert_data", table_name, [a], [b]]));
 };
 
 window.doGet = async () => {
@@ -260,13 +263,13 @@ window.doCreateTable = async () => {
 function renderDeleteTableList() {
   const container = document.getElementById('delete-table-list');
   container.innerHTML = '';
-  Cache.getTables().forEach(name => {
+  /*Cache.getTables().forEach(name => {
     const btn = document.createElement('button');
     btn.className = 'table-chip';
     btn.textContent = name;
     btn.onclick = () => confirmDeleteTable(name);
     container.appendChild(btn);
-  });
+    });*/
 }
 
 function confirmDeleteTable(name) {

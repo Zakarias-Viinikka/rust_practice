@@ -15,13 +15,12 @@ use crate::db_table::*;
 use anyhow::{Result, anyhow, bail};
 use std::ffi::CString; //let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
 
-pub async fn create_local_db_connection(filename: &str) -> Result<*mut ffi::sqlite3> {
-    let filename_cstr = CString::new(filename)?;
+pub async fn create_local_db_connection(conn_name: &str) -> Result<*mut ffi::sqlite3> {
+    let filename_cstr = CString::new(conn_name)?;
     let mut db = std::ptr::null_mut();
 
     // must be awaited to completion BEFORE opening
     install_opfs_sahpool(&OpfsSAHPoolCfg::default(), true).await?;
-
     // null = "use the default vfs", which is now sahpool since we passed `true` above
     let vfs_name: *const std::os::raw::c_char = std::ptr::null();
     let ret = unsafe {
@@ -115,6 +114,7 @@ pub fn insert_into_table(
     values: Vec<(String, String)>,
 ) -> Result<()> {
     let sql = generate_insert_sql(table_name, values);
+    web_sys::console::log_1(&format!("generated SQL: {}", sql).into());
     let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
     unsafe {
         let ret = ffi::sqlite3_exec(

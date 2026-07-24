@@ -15,7 +15,6 @@ use crate::db_table::*;
 #[wasm_bindgen]
 pub struct LiveForever {
     db_conn: *mut ffi::sqlite3,
-    table: Table,
 }
 
 #[wasm_bindgen]
@@ -24,26 +23,7 @@ impl LiveForever {
         let db_conn = black_magic::create_local_db_connection(&conn_name)
             .await
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
-
-        let table = Table {
-            table_name: "content".to_string(),
-            columns: vec![
-                Column {
-                    column_name: "textblock".to_string(),
-                    column_type: ColumnType::Text,
-                },
-                Column {
-                    column_name: "metadata".to_string(),
-                    column_type: ColumnType::Text,
-                },
-            ],
-        };
-        black_magic::create_table(db_conn, &table.table_name, table.columns)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?;
-        Ok(LiveForever {
-            db_conn: db_conn,
-            table,
-        })
+        Ok(LiveForever { db_conn: db_conn })
     }
 
     /*pub fn read_from_db(
@@ -70,16 +50,22 @@ impl LiveForever {
     }
 
     //console.log(state.change_data("new data"));
-    pub async fn insert_data(&self, table_name: String, values: JsValue) -> Result<(), JsValue> {
-        let values: Vec<(String, String)> =
-            serde_wasm_bindgen::from_value(values).map_err(|e| JsValue::from(e.to_string()))?;
-        black_magic::insert_into_table(self.db_conn, &table_name, values) // PLACEHOLDER - doesn't exist yet
+    pub async fn insert_data(
+        &self,
+        table_name: String,
+        col_names: Vec<String>, // array of column names from JS
+        vals: Vec<String>,      // array of values from JS
+    ) -> Result<(), JsValue> {
+        // zip the two arrays into (column, value) pairs
+        let values: Vec<(String, String)> = col_names.into_iter().zip(vals.into_iter()).collect();
+
+        black_magic::insert_into_table(self.db_conn, &table_name, values)
             .map_err(|e| JsValue::from(e.to_string()))?;
         Ok(())
     }
 
-    pub async fn drop_table(&self) -> Result<(), JsValue> {
-        black_magic::drop_table(self.db_conn, &self.table.table_name)?;
+    pub async fn drop_table(&self, table_name: String) -> Result<(), JsValue> {
+        black_magic::drop_table(self.db_conn, &table_name)?;
         Ok(())
     }
 
