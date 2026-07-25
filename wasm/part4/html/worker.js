@@ -14,7 +14,7 @@ const handlers = {
   initialize: async (msg) => {
       console.log("[worker] initialize handler called");
       try {
-          console.log("[worker] calling LiveForever.new with", msg[1]);
+          console.log("[worker] calling LiveForever.new with db_conn_name: ", msg[1]);
           db_manager = await LiveForever.new(msg[1]);
           console.log("[worker] LiveForever.new resolved");
           return "ok";
@@ -31,8 +31,6 @@ const handlers = {
   get_data: (msg) => db_manager.get_data(msg[1], msg[2], msg[3]),
   insert_data: async (msg) => {
       // msg = ["insert_data", table_name, col_names_array, vals_array]
-      console.log("test");
-      console.log("inserting:", msg[1], msg[2], msg[3]);
       await db_manager.insert_data(msg[1], msg[2], msg[3]);
       return "ok";
   },

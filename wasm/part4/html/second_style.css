@@ -57,7 +57,7 @@ h2 {
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   margin-bottom: 16px;
 }
@@ -211,4 +211,9 @@ label input[type="checkbox"] {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
+}
+
+section label {
+    display: inline-block;
+    margin: 0 4px 0 0;
 }

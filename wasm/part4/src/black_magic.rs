@@ -1,6 +1,6 @@
 //use js_sys::{Array, Uint8Array};
 use wasm_bindgen::{JsCast, JsValue};
-use web_sys::{Blob, Url};
+use web_sys::{Blob, Url, console::log_1};
 // new for sahpool
 use sqlite_wasm_rs::{
     self as ffi,
@@ -40,36 +40,13 @@ pub async fn create_local_db_connection(conn_name: &str) -> Result<*mut ffi::sql
 // Builds a table from a caller-supplied column list — replaces the old
 // fixed Table/Column version. Caller decides every column + constraint.
 use crate::create_table_col_def::ColumnDef;
+
 pub fn create_table(
     db: *mut ffi::sqlite3,
     table_name: &str,
     columns: Vec<ColumnDef>,
 ) -> Result<()> {
-    let mut col_defs = Vec::new();
-    for col in &columns {
-        let mut def = format!("{} {}", col.0, col.1);
-        if col.2 {
-            def.push_str(" PRIMARY KEY");
-        }
-        if col.6 {
-            def.push_str(" AUTOINCREMENT");
-        }
-        if col.3 {
-            def.push_str(" NOT NULL");
-        }
-        if col.4 {
-            def.push_str(" UNIQUE");
-        }
-        if !col.5.is_empty() {
-            def.push_str(&format!(" DEFAULT {}", col.5));
-        }
-        col_defs.push(def);
-    }
-    let sql = format!(
-        "CREATE TABLE IF NOT EXISTS {} ({});",
-        table_name,
-        col_defs.join(", ")
-    );
+    let sql = generate_create_table_sql(table_name, &columns);
     let sql_cstr = CString::new(sql).map_err(|e| anyhow!("CString conversion failed: {}", e))?;
     unsafe {
         let ret = ffi::sqlite3_exec(
@@ -234,7 +211,11 @@ pub fn edit_col_in_row(
         ffi::sqlite3_prepare_v2(db, sql_cstr.as_ptr(), -1, &mut stmt, std::ptr::null_mut())
     };
     if ret != ffi::SQLITE_OK {
-        bail!("prepare failed: {}", ffi::code_to_str(ret));
+        bail!(
+            "prepare failed: {} (sql: {})",
+            ffi::code_to_str(ret),
+            generate_update_sql(table_name, row.parse()?, &(column, new_value))
+        );
     }
 
     let value_cstr = CString::new(column)?;

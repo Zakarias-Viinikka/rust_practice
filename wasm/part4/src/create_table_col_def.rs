@@ -1,5 +1,4 @@
 //use serde_wasm_bindgen::to_value;
-
 #[derive(serde::Deserialize)]
 pub struct ColumnDef(
     pub String, // name
@@ -9,5 +8,4 @@ pub struct ColumnDef(
     pub bool,   // unique
     pub String, // default value
     pub bool,   // autoincrement
-    pub bool,   // indexed
 );

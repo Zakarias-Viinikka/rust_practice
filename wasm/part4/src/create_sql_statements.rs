@@ -183,7 +183,6 @@ mod tests {
             unique: bool,
             default: &str,
             autoinc: bool,
-            indexed: bool,
         ) -> ColumnDef {
             ColumnDef(
                 name.to_string(),
@@ -193,14 +192,13 @@ mod tests {
                 unique,
                 default.to_string(),
                 autoinc,
-                indexed,
             )
         }
 
         // A column with every flag off should emit just "name TYPE", nothing else.
         #[test]
         fn plain_column_no_constraints() {
-            let columns = vec![col("name", "TEXT", false, false, false, "", false, false)];
+            let columns = vec![col("name", "TEXT", false, false, false, "", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(sql, "CREATE TABLE IF NOT EXISTS users (name TEXT);");
         }
@@ -208,7 +206,7 @@ mod tests {
         // PRIMARY KEY with autoincrement off should emit PRIMARY KEY only, no AUTOINCREMENT.
         #[test]
         fn primary_key_alone_without_autoincrement() {
-            let columns = vec![col("id", "INTEGER", true, false, false, "", false, false)];
+            let columns = vec![col("id", "INTEGER", true, false, false, "", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -219,7 +217,7 @@ mod tests {
         // PRIMARY KEY + autoincrement both on should emit both keywords, in that order.
         #[test]
         fn primary_key_with_autoincrement() {
-            let columns = vec![col("id", "INTEGER", true, false, false, "", true, false)];
+            let columns = vec![col("id", "INTEGER", true, false, false, "", true)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -232,7 +230,7 @@ mod tests {
         // (even though this combo is invalid SQLite and would error at execution).
         #[test]
         fn autoincrement_without_primary_key_does_not_appear() {
-            let columns = vec![col("id", "INTEGER", false, false, false, "", true, false)];
+            let columns = vec![col("id", "INTEGER", false, false, false, "", true)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -243,7 +241,7 @@ mod tests {
         // NOT NULL flag alone should append "NOT NULL" and nothing else.
         #[test]
         fn not_null_flag() {
-            let columns = vec![col("email", "TEXT", false, true, false, "", false, false)];
+            let columns = vec![col("email", "TEXT", false, true, false, "", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -254,7 +252,7 @@ mod tests {
         // UNIQUE flag alone should append "UNIQUE" and nothing else.
         #[test]
         fn unique_flag() {
-            let columns = vec![col("email", "TEXT", false, false, true, "", false, false)];
+            let columns = vec![col("email", "TEXT", false, false, true, "", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(sql, "CREATE TABLE IF NOT EXISTS users (email TEXT UNIQUE);");
         }
@@ -262,9 +260,7 @@ mod tests {
         // A non-empty default value should produce "DEFAULT <value>".
         #[test]
         fn default_value_present() {
-            let columns = vec![col(
-                "status", "TEXT", false, false, false, "active", false, false,
-            )];
+            let columns = vec![col("status", "TEXT", false, false, false, "active", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -275,26 +271,15 @@ mod tests {
         // An empty-string default means "no default was set" - DEFAULT must not appear at all.
         #[test]
         fn empty_default_string_omits_default_clause() {
-            let columns = vec![col("status", "TEXT", false, false, false, "", false, false)];
+            let columns = vec![col("status", "TEXT", false, false, false, "", false)];
             let sql = generate_create_table_sql("users", &columns);
             assert!(!sql.contains("DEFAULT"));
-        }
-
-        // The "indexed" flag is handled separately via CREATE INDEX, not this function -
-        // toggling it on/off should produce byte-identical SQL either way.
-        #[test]
-        fn indexed_flag_has_no_effect_on_create_table_sql() {
-            let indexed_col = col("email", "TEXT", false, false, false, "", false, true);
-            let not_indexed_col = col("email", "TEXT", false, false, false, "", false, false);
-            let sql_a = generate_create_table_sql("users", &[indexed_col]);
-            let sql_b = generate_create_table_sql("users", &[not_indexed_col]);
-            assert_eq!(sql_a, sql_b);
         }
 
         // All constraints on at once - checks the exact keyword ordering the function produces.
         #[test]
         fn all_constraints_combined_in_correct_order() {
-            let columns = vec![col("id", "INTEGER", true, true, true, "1", true, false)];
+            let columns = vec![col("id", "INTEGER", true, true, true, "1", true)];
             let sql = generate_create_table_sql("users", &columns);
             assert_eq!(
                 sql,
@@ -306,9 +291,9 @@ mod tests {
         #[test]
         fn multiple_columns_joined_with_commas() {
             let columns = vec![
-                col("id", "INTEGER", true, false, false, "", true, false),
-                col("name", "TEXT", false, true, false, "", false, false),
-                col("age", "INTEGER", false, false, false, "0", false, false),
+                col("id", "INTEGER", true, false, false, "", true),
+                col("name", "TEXT", false, true, false, "", false),
+                col("age", "INTEGER", false, false, false, "0", false),
             ];
             let sql = generate_create_table_sql("people", &columns);
             assert_eq!(
@@ -321,7 +306,7 @@ mod tests {
         // guards against the table name being accidentally hardcoded inside the function.
         #[test]
         fn table_name_is_not_hardcoded() {
-            let columns = vec![col("x", "TEXT", false, false, false, "", false, false)];
+            let columns = vec![col("x", "TEXT", false, false, false, "", false)];
             let sql_a = generate_create_table_sql("alpha", &columns);
             let sql_b = generate_create_table_sql("beta", &columns);
             assert!(sql_a.contains("alpha"));
