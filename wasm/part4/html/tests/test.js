@@ -698,17 +698,10 @@ await test("drop_table (no arg): expected to error because Rust expects a table 
 // ============================================================
 //  2. get_data, edit_row, delete_row on a non‑existent table
 // ============================================================
-await test("get_data: non-existent table should error (or return empty?)", async () => {
+await test("get_data: non-existent table should error", async () => {
   const reply = await worker_do_work(["get_data", "table_does_not_exist", "", ["id"]]);
-  // Currently unknown behaviour: it may error, or it may return an empty array.
-  // We'll assert that either an error is returned OR the payload is an empty array.
-  if (reply[0] === "error") {
-    // If it errors, that's fine – we just document it as the expected behaviour.
-    return;
-  }
-  // If it succeeded, check that the payload is an empty array (consistent with "no such table" = empty result)
-  if (!Array.isArray(reply[1]) || reply[1].length !== 0) {
-    throw new Error(`expected error or empty array, got: ${JSON.stringify(reply)}`);
+  if (reply[0] !== "error") {
+    throw new Error("expected error for non-existent table, got: " + JSON.stringify(reply));
   }
 });
 
@@ -723,52 +716,21 @@ await test("delete_row: non-existent table should error", async () => {
 });
 
 // ============================================================
-//  3. get_data with an empty column list
-// ============================================================
-await test("get_data: empty column list – what happens?", async () => {
-  // Create a temporary table
-  const tbl = "empty_cols_test";
-  await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
-  await worker_do_work(["insert_data", tbl, ["id"], ["1"]]);
-
-  const reply = await worker_do_work(["get_data", tbl, "", []]);
-  // This might generate 'SELECT FROM ...' which is invalid SQL -> error.
-  // Or maybe your Rust code handles it differently. Let's find out.
-  if (reply[0] === "error") {
-    // Good, it caught the problem. Pass the test.
-    await worker_do_work(["delete_table", tbl]);
-    return;
-  }
-  // If it succeeded, log what we got – it may be an empty row or something weird.
-  const payload = reply[1];
-  console.log("get_data with empty columns returned:", payload);
-  await worker_do_work(["delete_table", tbl]);
-  // Don't fail the test; just document that it doesn't error.
-  // (Change this if you want it to be considered a failure)
-});
-
-// ============================================================
 //  4. insert_data with empty col_names and vals arrays
 // ============================================================
-await test("insert_data: empty columns/values – expect default row or error", async () => {
+await test("insert_data: empty columns/values inserts a default row", async () => {
   const tbl = "empty_insert_test";
-  await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false,true]]]);
 
   const reply = await worker_do_work(["insert_data", tbl, [], []]);
-  // Probably succeeds and inserts a row with the auto‑increment id and no other values.
-  // Or it could error. We'll check.
   if (reply[0] === "error") {
-    // Error is also acceptable, just document it.
-    await worker_do_work(["delete_table", tbl]);
-    return;
+    throw new Error("empty insert should succeed, got error: " + reply[1]);
   }
 
-  // If success, check that a row was actually added.
   const check = await worker_do_work(["get_data", tbl, "", ["id"]]);
   if (check[0] === "error") throw new Error("get_data failed: " + check[1]);
-  if (check[1].length !== 1) {
-    throw new Error(`expected 1 row, got ${check[1].length}`);
-  }
+  if (check[1].length !== 1) throw new Error(`expected 1 row, got ${check[1].length}`);
+
   await worker_do_work(["delete_table", tbl]);
 });
 
@@ -810,30 +772,26 @@ await test("delete_row: non‑numeric row id is silently ignored", async () => {
 // ============================================================
 await test("create_table: table name with spaces and quotes works", async () => {
   const tbl = "my table with 'quotes'";
-  const reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
-  if (reply[0] === "error") {
-    // If it errors, that's fine – we just want to document it.
-    // Clean up may fail, but we can ignore.
-    return;
-  }
-  // If successful, check that the table exists
-  const tables = await worker_do_work(["list_tables"]);
-  if (!tables[1].includes(tbl)) throw new Error("table not found in list_tables");
+  let reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
+
+  reply = await worker_do_work(["list_tables"]);
+  if (reply[0] === "error") throw new Error("list_tables failed: " + reply[1]);
+  if (!reply[1].includes(tbl)) throw new Error("table not found in list_tables");
+
   await worker_do_work(["delete_table", tbl]);
 });
 
 await test("create_table: column name is a SQL keyword (select)", async () => {
   const tbl = "keyword_col";
   const cols = [["select", "TEXT", false,false,false,"",false]];
-  const reply = await worker_do_work(["create_table", tbl, cols]);
-  if (reply[0] === "error") {
-    // If it fails because 'select' is reserved, that's okay.
-    return;
-  }
-  const check = await worker_do_work(["check_table", tbl]);
-  if (check[0] === "error") throw new Error("check_table failed: " + check[1]);
-  const schema = check[1];
-  if (!schema[0].includes("name=select")) throw new Error(`expected column name 'select', got: ${schema[0]}`);
+  let reply = await worker_do_work(["create_table", tbl, cols]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
+
+  reply = await worker_do_work(["check_table", tbl]);
+  if (reply[0] === "error") throw new Error("check_table failed: " + reply[1]);
+  if (!reply[1][0].includes("name=select")) throw new Error(`expected column name 'select', got: ${reply[1][0]}`);
+
   await worker_do_work(["delete_table", tbl]);
 });
 
@@ -1362,40 +1320,18 @@ await test("get_data: non-existent column should error", async () => {
 // or return an error. The test passes in both cases as long as it doesn't crash/hang.
 await test("get_data: table with spaces and quotes in name", async () => {
   const tbl = `test table with 'quotes'`;
-  // Create the table
-  let reply = await worker_do_work(["create_table", tbl, [
-    ["id","INTEGER",true,true,true,"",false]
-  ]]);
-  if (reply[0] === "error") {
-    // If creation itself fails, skip the get_data test but don't fail the suite.
-    // Just log that the table couldn't be created.
-    // (We'll consider this acceptable – the feature might be missing.)
-    return;
-  }
+  let reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
 
-  // Insert a row
   reply = await worker_do_work(["insert_data", tbl, ["id"], ["1"]]);
-  if (reply[0] === "error") {
-    // Cleanup and leave
-    await worker_do_work(["delete_table", tbl]);
-    return; // can't test get_data if insert fails
-  }
+  if (reply[0] === "error") throw new Error("insert failed: " + reply[1]);
 
-  // Now try get_data on this oddly‑named table
   reply = await worker_do_work(["get_data", tbl, "", ["id"]]);
-  if (reply[0] === "error") {
-    // Error is acceptable (e.g., SQL quoting issue). Clean up and pass.
-    await worker_do_work(["delete_table", tbl]);
-    return;
-  }
-
-  // If success, check that we got the row back
+  if (reply[0] === "error") throw new Error("get_data failed: " + reply[1]);
   if (reply[1].length !== 1 || reply[1][0][0] !== "1") {
-    await worker_do_work(["delete_table", tbl]);
-    throw new Error("unexpected data from special‑char table");
+    throw new Error("unexpected data from special-char table");
   }
 
-  // Clean up
   await worker_do_work(["delete_table", tbl]);
 });
 
@@ -1529,33 +1465,16 @@ await test("swap_columns: extra arguments cause an error", async () => {
 // whose name contains spaces and single quotes. The SQL may need proper quoting.
 await test("check_table: table with spaces and quotes in name", async () => {
   const tbl = `table with 'quotes'`;
-  // Create the table
-  let reply = await worker_do_work(["create_table", tbl, [
-    ["id","INTEGER",true,true,true,"",false]
-  ]]);
-  if (reply[0] === "error") {
-    // If creation fails (maybe due to quoting), skip the introspection test.
-    // Clean up may not be necessary, but we try anyway.
-    return;
-  }
+  let reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
 
-  // Now attempt check_table on this table
   reply = await worker_do_work(["check_table", tbl]);
-  if (reply[0] === "error") {
-    // It's okay if the wrapper can't handle the quoting – we just record the error.
-    await worker_do_work(["delete_table", tbl]);
-    return;
-  }
-
-  // If it succeeds, check that we got a single column back
+  if (reply[0] === "error") throw new Error("check_table failed: " + reply[1]);
   if (!Array.isArray(reply[1]) || reply[1].length !== 1) {
     throw new Error(`expected 1 column schema, got ${JSON.stringify(reply[1])}`);
   }
-  if (!reply[1][0].includes("name=id")) {
-    throw new Error(`expected column info to contain name=id, got ${reply[1][0]}`);
-  }
+  if (!reply[1][0].includes("name=id")) throw new Error(`expected column id, got: ${reply[1][0]}`);
 
-  // Clean up
   await worker_do_work(["delete_table", tbl]);
 });
 
@@ -1593,39 +1512,26 @@ await test("check_table: schema correct after (failed) index creation", async ()
 // The wrapper should quote it properly, or fail with an error.
 await test("table named 'table' (SQL keyword)", async () => {
   const tbl = "table";
-  let reply = await worker_do_work(["create_table", tbl, [
-    ["id","INTEGER",true,true,true,"",false]
-  ]]);
-  if (reply[0] === "error") {
-    // It's acceptable if the wrapper rejects a reserved keyword.
-    // Just document that it's not supported yet.
-    return;
-  }
+  let reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
 
-  // Insert a row
   reply = await worker_do_work(["insert_data", tbl, ["id"], ["1"]]);
   if (reply[0] === "error") throw new Error("insert failed: " + reply[1]);
 
-  // Read back
   reply = await worker_do_work(["get_data", tbl, "", ["id"]]);
   if (reply[0] === "error") throw new Error("get_data failed: " + reply[1]);
   if (reply[1].length !== 1 || reply[1][0][0] !== "1") {
     throw new Error("unexpected data from keyword-named table");
   }
 
-  // Clean up
   await worker_do_work(["delete_table", tbl]);
 });
 
 // Purpose: Same as above, but with the table name "index" (another SQL keyword).
 await test("table named 'index' (SQL keyword)", async () => {
   const tbl = "index";
-  let reply = await worker_do_work(["create_table", tbl, [
-    ["id","INTEGER",true,true,true,"",false]
-  ]]);
-  if (reply[0] === "error") {
-    return; // Accept failure as "not supported"
-  }
+  let reply = await worker_do_work(["create_table", tbl, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] === "error") throw new Error("create_table failed: " + reply[1]);
 
   reply = await worker_do_work(["insert_data", tbl, ["id"], ["1"]]);
   if (reply[0] === "error") throw new Error("insert failed: " + reply[1]);
@@ -1642,58 +1548,27 @@ await test("table named 'index' (SQL keyword)", async () => {
 // Purpose: Stress the naming by creating a table with a 1000‑character name.
 // The system should either accept it (if file/identifier limits allow) or
 // return an error without crashing.
-await test("extremely long table name (1k chars)", async () => {
+await test("extremely long table name (1k chars) should error", async () => {
   const longName = "a".repeat(1000);
-  let reply = await worker_do_work(["create_table", longName, [
-    ["id","INTEGER",true,true,true,"",false]
-  ]]);
-  if (reply[0] === "error") {
-    // Expected: identifier too long or OS limit. This is a pass.
-    return;
-  }
-  // If creation succeeds, try to insert and read back
-  reply = await worker_do_work(["insert_data", longName, ["id"], ["1"]]);
-  if (reply[0] === "error") {
-    // Partial failure – try to drop the table if possible
+  const reply = await worker_do_work(["create_table", longName, [["id","INTEGER",true,true,true,"",false]]]);
+  if (reply[0] !== "error") {
     await worker_do_work(["delete_table", longName]);
-    throw new Error("insert into long-named table failed: " + reply[1]);
+    throw new Error("expected error for extremely long table name, but it succeeded");
   }
-  reply = await worker_do_work(["get_data", longName, "", ["id"]]);
-  if (reply[0] === "error") throw new Error("get_data on long-named table failed: " + reply[1]);
-  if (reply[1].length !== 1 || reply[1][0][0] !== "1") {
-    throw new Error("unexpected data from long-named table");
-  }
-  // Clean up
-  await worker_do_work(["delete_table", longName]);
 });
 
 // Purpose: Test a column with a 1000‑character name. Should either work or error cleanly.
-await test("extremely long column name (1k chars)", async () => {
+await test("extremely long column name (1k chars) should error", async () => {
   const tbl = "long_col_test";
   const longCol = "c".repeat(1000);
   let reply = await worker_do_work(["create_table", tbl, [
     ["id", "INTEGER", true, true, true, "", false],
     [longCol, "TEXT", false, false, false, "", false]
   ]]);
-  if (reply[0] === "error") {
-    // Accept error as identifier too long
-    return;
-  }
-  // If table created, try insert
-  reply = await worker_do_work(["insert_data", tbl, ["id", longCol], ["1", "hello"]]);
-  if (reply[0] === "error") {
-    // Maybe insert fails – just drop and pass
+  if (reply[0] !== "error") {
     await worker_do_work(["delete_table", tbl]);
-    return;
+    throw new Error("expected error for extremely long column name, but it succeeded");
   }
-  // Read back
-  reply = await worker_do_work(["get_data", tbl, "", [longCol]]);
-  if (reply[0] === "error") throw new Error("get_data on long column name failed: " + reply[1]);
-  if (reply[1].length !== 1 || reply[1][0][0] !== "hello") {
-    throw new Error("unexpected data from long column");
-  }
-  // Clean up
-  await worker_do_work(["delete_table", tbl]);
 });
 
 // Purpose: Send several insert commands in parallel (without awaiting each one
