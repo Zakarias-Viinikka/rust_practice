@@ -1,12 +1,4 @@
-(async () => {
-  try {
-    const root = await navigator.storage.getDirectory();
-    console.log("OPFS root handle:", root);
-  } catch (e) {
-    console.error("OPFS NOT AVAILABLE:", e);
-  }
-})();
-import init, { LiveForever } from '../pkg/part4.js';
+import init, { LiveForever } from './wasm_output/part4.js';
 await init();
 let db_manager = null;   // will hold the instance after successful creation
 // each handler takes the raw message array and returns the payload to send back
