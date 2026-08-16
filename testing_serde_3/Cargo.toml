@@ -1,0 +1,15 @@
+[package]
+name = "testing_serde_3"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.8.20", features = ["csr"] }
+leptos_router = "0.8.15"
+not_leptos_parts_of_code = { path = "not_leptos_parts_of_code" }
+
+web-sys = { version = "0.3", features = ["CustomEvent", "Event", "EventTarget", "Window"] }
+
+wasm-bindgen = "0.2"
