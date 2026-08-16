@@ -21,21 +21,22 @@ fn App() -> impl IntoView {
         name: "John".to_string(),
     };
 
-    javascript_take_the_wheel!("data_back", |js_value| {
-        log!("received data from js");
-        let data_in_transport_mode = js_sys::Uint8Array::from(js_value).to_vec();
-        match Data::deserialize(&data_in_transport_mode) {
-            Ok(data) => log!("data came back: {:?}", data),
-            Err(e) => log!("failed to deserialize: {:?}", e),
-        }
-    });
-
+    //serialize and send data to js
     Effect::new(move || match data.serialize() {
         Ok(data_in_transport_mode) => {
             log!("sending data to js");
             send_data_to_js(&data_in_transport_mode);
         }
         Err(e) => log!("serialize failed: {:?}", e),
+    });
+
+    //this is called by js
+    javascript_take_the_wheel!("data_back", |js_value| {
+        log!("received data from js");
+        match Data::cure_from_js_value(js_value) {
+            Ok(data) => log!("data came back: {:?}", data),
+            Err(e) => log!("failed to deserialize: {:?}", e),
+        }
     });
 
     view! { "" }

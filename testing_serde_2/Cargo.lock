@@ -920,6 +920,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bincode",
+ "js-sys",
  "serde",
  "serde-wasm-bindgen",
  "wasm-bindgen",
@@ -1504,7 +1505,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "console_error_panic_hook",
- "js-sys",
  "leptos",
  "leptos_router",
  "not_leptos_parts_of_code",
