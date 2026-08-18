@@ -1,0 +1,11 @@
+[package]
+name = "socket_tester"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.8.20", features = ["csr"] }
+leptos_router = "0.8.15"
+wasm-bindgen = "0.2.127"
+web-sys = { version = "0.3.104", features = ["WebSocket", "MessageEvent"] }

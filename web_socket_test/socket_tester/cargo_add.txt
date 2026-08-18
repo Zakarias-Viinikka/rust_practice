@@ -1,0 +1,2 @@
+cargo add web-sys -F WebSocket,MessageEvent
+cargo add wasm-bindgen

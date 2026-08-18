@@ -1,0 +1,3 @@
+cargo add axum -F ws
+cargo add tokio -F full
+cargo add futures-util
