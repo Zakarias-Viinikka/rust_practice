@@ -1,4 +1,6 @@
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Serialize, de::DeserializeOwned};
+
+use crate::db_error::DbError;
 
 pub trait Convert: Serialize + DeserializeOwned {
     fn serialize_wrapper(&self) -> Vec<u8> {
@@ -20,13 +22,3 @@ pub fn ok_serialized() -> Vec<u8> {
 }
 
 impl<T: Serialize + DeserializeOwned> Convert for T {}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum DbError {
-    CureFail(String),
-    ConnError(String),
-    IllegalInput(String),
-    SqlExecuteFail(String),
-    SerializeError(String),
-    BadCode(String), //this is only meant to error if there is something wrong with the code
-}

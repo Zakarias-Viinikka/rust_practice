@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::byte_serialization::DbError;
+use crate::db_error::DbError;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Row {

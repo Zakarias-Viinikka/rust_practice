@@ -1,4 +1,5 @@
-use crate::create_table::ColumnDef;
+use shared_types::create_table::ColumnDef;
+use shared_types::table_row;
 
 // Builds CREATE TABLE SQL from a caller-supplied column list (replaces the old Table/Column version).
 pub fn generate_create_table_sql(table_name: &str, columns: &[ColumnDef]) -> String {
@@ -189,7 +190,6 @@ pub fn generate_get_data_by_order_sql(
     )
 }
 
-use crate::table_row;
 fn col_to_sql_literal(value: &table_row::Col) -> String {
     match value {
         table_row::Col::Null => "NULL".to_string(),

@@ -1,5 +1,5 @@
-use crate::byte_serialization::DbError;
 use crate::create_table;
+use crate::db_error::DbError;
 use crate::table_row;
 use serde::{Deserialize, Serialize};
 

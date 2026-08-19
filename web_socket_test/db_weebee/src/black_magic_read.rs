@@ -1,11 +1,12 @@
-use crate::data_structures;
-use crate::table_row::{Col, Row};
-use crate::{create_sql_statements::*, db_error::DbError};
+use crate::create_sql_statements::*;
 use rusqlite::Connection;
+use shared_types::data_structures;
+use shared_types::db_error::DbError;
+use shared_types::table_row::{Col, Row};
 
 pub fn read_from_db(
     conn: &Connection,
-    ctx: &public_data_shapes::GetDataIn,
+    ctx: &data_structures::GetDataIn,
 ) -> Result<Vec<Row>, DbError> {
     let table_name = &ctx.table_name;
     let arguments: Vec<String> = ctx.arguments.iter().map(|x| x.to_sql_condition()).collect();
@@ -17,7 +18,7 @@ pub fn read_from_db(
 
 pub fn read_from_db_ordered(
     conn: &Connection,
-    ctx: &public_data_shapes::GetDataOrderedIn,
+    ctx: &data_structures::GetDataOrderedIn,
 ) -> Result<Vec<Row>, DbError> {
     let table_name = &ctx.table_name;
     let arguments: Vec<String> = ctx.arguments.iter().map(|x| x.to_sql_condition()).collect();

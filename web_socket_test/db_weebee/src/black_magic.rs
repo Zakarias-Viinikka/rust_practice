@@ -1,26 +1,9 @@
-//use crate::black_magic_read::read_from_db;
 use crate::create_sql_statements::*;
-//use crate::db_table::*;
 
-//use crate::DbError;
-use crate::create_table::ColumnDef;
-use crate::data_structures::*;
-use crate::db_error::DbError;
-use crate::table_row::*;
-
-pub async fn create_local_db_connection(
-    conn_name: &str,
-) -> Result<(OpfsSAHPoolUtil, rusqlite::Connection)> {
-    let sahpool_util =
-        install_opfs_sahpool::<ffi::WasmOsCallback>(&OpfsSAHPoolCfg::default(), true).await?;
-
-    let conn = rusqlite::Connection::open_with_flags(
-        conn_name,
-        rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE | rusqlite::OpenFlags::SQLITE_OPEN_CREATE,
-    )?;
-
-    Ok((sahpool_util, conn))
-}
+use shared_types::create_table::ColumnDef;
+use shared_types::data_structures::*;
+use shared_types::db_error::DbError;
+use shared_types::table_row::*;
 
 pub fn create_table(
     conn: &rusqlite::Connection,
@@ -33,12 +16,6 @@ pub fn create_table(
     let sql = generate_create_table_sql(table_name, &columns);
     conn.execute(&sql, [])
         .map_err(|e| DbError::SqlExecuteFail(format!("err: {}, sql: {}", e, sql)))?;
-    Ok(())
-}
-
-pub fn close_conn(conn: rusqlite::Connection) -> Result<(), DbError> {
-    conn.close()
-        .map_err(|(_, e)| DbError::ConnError(format!("Failed to close connection: {}", e)))?;
     Ok(())
 }
 
@@ -266,9 +243,18 @@ pub fn remove_column(
     Ok(())
 }
 
-pub fn export_database(util: &OpfsSAHPoolUtil, conn_name: &str) -> Result<Vec<u8>, DbError> {
-    util.export_db(conn_name)
-        .map_err(|e| DbError::SqlExecuteFail(format!("export_database failed: {}", e)))
+pub fn export_database(conn: &rusqlite::Connection) -> Result<Vec<u8>, DbError> {
+    conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")
+        .map_err(|e| {
+            DbError::SqlExecuteFail(format!("export_database checkpoint failed: {}", e))
+        })?;
+
+    let path = conn
+        .path()
+        .ok_or_else(|| DbError::ConnError("Database is not file-backed".to_string()))?;
+
+    std::fs::read(path)
+        .map_err(|e| DbError::ConnError(format!("failed to read database file: {}", e)))
 }
 
 pub fn create_table_from_export(
