@@ -1,7 +1,6 @@
 use leptos::prelude::*;
 use shared_types::{data_structures, message_struct};
-use socket_tester::send_msg::send_message;
-use socket_tester::*;
+use socket_tester::{connect_to_socket, receive_message, send_msg::send_message};
 use web_sys::WebSocket;
 
 fn main() {
@@ -31,14 +30,51 @@ fn App() -> impl IntoView {
 
     let (all_messages_received, all_messages_received_set) = signal(Vec::<MessagesReceived>::new());
 
-    let result = connect(move |text| {
-        all_messages_received_set.update(|messages| {
-            let id = messages.len();
-            messages.push(MessagesReceived::new(id, text));
-        });
-    });
+    let on_message = move |json_response: String| {
+        'block: {
+            let (response, message_id) = match receive_message::receive_response(&json_response) {
+                Ok(data) => data,
+                Err(e) => {
+                    let error_message = format!("{:?}", e);
+                    error_msg_set.set(error_message);
+                    break 'block;
+                }
+            };
+
+            match response {
+                receive_message::ExpectedResponse::GetData(get_data_out) => {
+                    let rows = get_data_out.rows;
+                    for row in rows.iter() {
+                        all_messages_received_set.update(|messages| {
+                            messages.push(MessagesReceived {
+                                message: format!("{:?}", row.to_string_vec()),
+                                id: message_id,
+                            });
+                        });
+                    }
+                }
+                _ => (),
+            };
+        };
+    };
+
+    let on_establish_conn_fail = move |err: String| {
+        failed_to_establish_conn.set(true);
+        error_msg_set.set(err);
+    };
+
+    let on_success_socket_connect = move |ws: WebSocket| {
+        socket_conn_set.set(Some(ws));
+    };
+
+    let result = connect_to_socket(
+        on_message,
+        on_establish_conn_fail,
+        on_success_socket_connect,
+    );
+
     match result {
-        Ok(ws) => socket_conn_set.set(Some(ws)),
+        Ok(_) => (),
         Err(e) => {
             failed_to_establish_conn.set(true);
             error_msg_set.set(e.to_string());
