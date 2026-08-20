@@ -12,7 +12,7 @@ pub fn new_liver() -> mascot::LiveForever {
 }
 
 pub fn create_table_if_not_exist(liver: &LiveForever) -> Result<(), DbError> {
-    let columns = socket_testing_table::COLUMN_DEFINITIONS;
+    let columns = socket_testing_table::column_definitions();
     let conn = &liver.db_conn;
     black_magic::create_table(conn, TABLE_NAME, columns)
 }
@@ -21,7 +21,7 @@ pub fn create_data_if_not_exist(liver: &LiveForever) -> Result<(), DbError> {
     if !any_rows_exist(liver)? {
         let column_name = socket_testing_table::COLUMN_NAME;
 
-        let stuff_to_insert = Vec::new();
+        let mut stuff_to_insert = Vec::new();
         stuff_to_insert.push(data_structures::ColumnValue {
             column_name: column_name.to_string(),
             value: table_row::Col::Text("text1".to_string()),
