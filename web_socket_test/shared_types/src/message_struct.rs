@@ -59,15 +59,30 @@ pub enum Request {
     CreateTableFromExport,
     CopyTable,
 }
-pub fn serialize_message(msg: &Message) -> Result<String, serde_json::Error> {
+
+pub fn message_to_json_str(msg: &Message) -> Result<String, serde_json::Error> {
     serde_json::to_string(msg)
 }
-pub fn deserialize_message(json: &str) -> Result<Message, serde_json::Error> {
+pub fn json_str_to_message(json: &str) -> Result<Message, serde_json::Error> {
     serde_json::from_str(json)
 }
-pub fn serialize_response(resp: &Response) -> Result<String, serde_json::Error> {
+pub fn response_to_json_str(resp: &Response) -> Result<String, serde_json::Error> {
     serde_json::to_string(resp)
 }
-pub fn deserialize_response(json: &str) -> Result<Response, serde_json::Error> {
+pub fn json_str_to_response(json: &str) -> Result<Response, serde_json::Error> {
     serde_json::from_str(json)
+}
+
+pub fn i_dont_want_to(message_id: usize, request: Request) -> Vec<u8> {
+    let response = Response {
+        message_id,
+        request,
+        result: Err(DbError::BadCode(
+            "server does not handle this request".to_string(),
+        )),
+    };
+
+    response_to_json_str(&response)
+        .expect("serializing hardcoded response should not fail")
+        .into_bytes()
 }
