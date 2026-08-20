@@ -1,4 +1,6 @@
-use leptos::{prelude::*, task::spawn_local};
+use leptos::prelude::*;
+use shared_types::{data_structures, message_struct};
+use socket_tester::send_msg::send_message;
 use socket_tester::*;
 use web_sys::WebSocket;
 
@@ -43,6 +45,23 @@ fn App() -> impl IntoView {
         }
     }
 
+    let send_message_get_data = move |_| {
+        let request = message_struct::Request::GetData;
+        let table_name = "socket_testing_table".to_string();
+        let arguments = data_structures::SelectArgument::All;
+        let columns_to_read = vec![];
+
+        let content = shared_types::data_structures::GetDataIn {
+            table_name,
+            arguments: vec![arguments],
+            columns_to_read,
+        };
+
+        if let Err(e) = send_message(socket_conn.get(), request, content, error_msg_set) {
+            error_msg_set.set(e);
+        }
+    };
+
     view! {
         <div id="container">
             <Show
@@ -67,36 +86,9 @@ fn App() -> impl IntoView {
                 <p>{move || error_msg.get()}</p>
             </Show>
 
-            <button on:click=move |_| {
-                if let Some(socket_conn) = socket_conn.get() {
-                    let result = socket_conn.send_with_str("hi");
-                    if let Err(e) = result {
-                        error_msg_set.set(e.as_string().unwrap_or_default());
-                    }
-                }
-            } >
+            <button on:click=send_message_get_data>
                 "Say Hi"
             </button>
         </div>
     }
 }
-
-/*if {move || socket_conn.get().is_some()} {
-    view! {
-        if {move || failed_to_establish_conn.get()} {
-            view! {
-                <h4>"Failed to get establish conn:" <br/></h4>
-                <p>{move || error_msg.get()}</p>
-            }.into_any()
-        } else {
-            view! {
-                //todo
-                // show all the messages received
-            }.into_any()
-        }
-    }.into_any()
-} else {
-    view! {
-        "Getting connection"
-    }.into_any()
-}*/

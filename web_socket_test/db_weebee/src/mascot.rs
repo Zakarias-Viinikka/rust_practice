@@ -4,8 +4,9 @@ use shared_types::byte_serialization::*;
 use shared_types::data_structures::*;
 use shared_types::db_error::DbError;
 use shared_types::table_row;
+
 pub struct LiveForever {
-    db_conn: rusqlite::Connection,
+    pub db_conn: rusqlite::Connection,
 }
 
 macro_rules! unwrap_or_bail {

@@ -34,9 +34,9 @@ pub fn id_column() -> ColumnDef {
     ))
 }
 
-pub fn default_col(column_type: ColumnType) -> ColumnDef {
+pub fn default_col(column_type: ColumnType, column_name: &str) -> ColumnDef {
     builder_to_column_def(ColumnDefBuilder(
-        "".to_string(),
+        column_name.to_string(),
         column_type,
         false,
         false,
@@ -46,9 +46,13 @@ pub fn default_col(column_type: ColumnType) -> ColumnDef {
     ))
 }
 
-pub fn col_with_default_value(column_type: ColumnType, default_value: String) -> ColumnDef {
+pub fn col_with_default_value(
+    column_type: ColumnType,
+    default_value: String,
+    column_name: &str,
+) -> ColumnDef {
     builder_to_column_def(ColumnDefBuilder(
-        "".to_string(),
+        column_name.to_string(),
         column_type,
         false,
         false,
