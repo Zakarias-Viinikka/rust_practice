@@ -1,4 +1,4 @@
-use crate::db_error::DbError;
+use crate::{byte_serialization::Convert, db_error::DbError};
 use serde::{Deserialize, Serialize};
 /// Wrapper around Vec<u8> that serializes as a base64 string in JSON.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -36,7 +36,7 @@ pub struct Message {
 pub struct Response {
     pub message_id: usize,
     pub request: Request,
-    pub result: Result<Base64Bytes, DbError>,
+    pub data: Base64Bytes,
 }
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum Request {
@@ -73,16 +73,6 @@ pub fn json_str_to_response(json: &str) -> Result<Response, serde_json::Error> {
     serde_json::from_str(json)
 }
 
-pub fn i_dont_want_to(message_id: usize, request: Request) -> Vec<u8> {
-    let response = Response {
-        message_id,
-        request,
-        result: Err(DbError::BadCode(
-            "server does not handle this request".to_string(),
-        )),
-    };
-
-    response_to_json_str(&response)
-        .expect("serializing hardcoded response should not fail")
-        .into_bytes()
+pub fn i_dont_want_to() -> Vec<u8> {
+    DbError::BadCode("server does not handle this request".to_string()).serialize_wrapper()
 }

@@ -35,7 +35,9 @@ pub fn create_data_if_not_exist(liver: &LiveForever) -> Result<(), DbError> {
             value: table_row::Col::Text("text3".to_string()),
         });
 
-        black_magic::insert_into_table(&liver.db_conn, TABLE_NAME, stuff_to_insert)?
+        for inserty_werty in stuff_to_insert {
+            black_magic::insert_into_table(&liver.db_conn, TABLE_NAME, vec![inserty_werty])?;
+        }
     }
     Ok(())
 }

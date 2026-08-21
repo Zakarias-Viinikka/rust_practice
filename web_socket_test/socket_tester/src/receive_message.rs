@@ -1,12 +1,11 @@
 use shared_types::{byte_serialization::Convert, data_structures, db_error, message_struct};
 
 pub fn receive_response(json: &str) -> Result<(ExpectedResponse, usize), ReceiveError> {
-    let response = message_struct::deserialize_response(json)
+    let response = message_struct::json_str_to_response(json)
         .map_err(|e| ReceiveError::OtherErr(e.to_string()))?;
     match response.request {
         message_struct::Request::GetData => {
-            let data = response.result.map_err(ReceiveError::DbErr)?;
-            let something = get_data(data)?;
+            let something = get_data(response.data)?;
             return Ok((ExpectedResponse::GetData(something), response.message_id));
         }
         _ => return Err(ReceiveError::UnexpectedResponse),
@@ -32,6 +31,7 @@ pub enum ReceiveError {
     OtherErr(String),
 }
 
+#[derive(Debug)]
 pub enum ExpectedResponse {
     GetData(data_structures::GetDataOut),
 }

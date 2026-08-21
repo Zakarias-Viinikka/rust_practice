@@ -5,23 +5,14 @@ use web_sys::WebSocket;
 
 fn main() {
     console_error_panic_hook::set_once();
-    //  trunk serve --open
-
     mount_to_body(App);
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct MessagesReceived {
-    message: String,
+    messages: Vec<String>,
     id: usize,
 }
-
-impl MessagesReceived {
-    fn new(id: usize, message: String) -> Self {
-        Self { message, id }
-    }
-}
-
 #[component]
 fn App() -> impl IntoView {
     let (socket_conn, socket_conn_set) = signal(None::<WebSocket>);
@@ -31,6 +22,7 @@ fn App() -> impl IntoView {
     let (all_messages_received, all_messages_received_set) = signal(Vec::<MessagesReceived>::new());
 
     let on_message = move |json_response: String| {
+        leptos::logging::log!("received message");
         'block: {
             let (response, message_id) = match receive_message::receive_response(&json_response) {
                 Ok(data) => data,
@@ -40,18 +32,21 @@ fn App() -> impl IntoView {
                     break 'block;
                 }
             };
+            leptos::logging::log!("response: {:?}", response);
 
             match response {
                 receive_message::ExpectedResponse::GetData(get_data_out) => {
                     let rows = get_data_out.rows;
-                    for row in rows.iter() {
-                        all_messages_received_set.update(|messages| {
-                            messages.push(MessagesReceived {
-                                message: format!("{:?}", row.to_string_vec()),
-                                id: message_id,
-                            });
+                    let row_strings = rows
+                        .iter()
+                        .map(|row| format!("{:?}", row.to_string_vec()))
+                        .collect();
+                    all_messages_received_set.update(|messages| {
+                        messages.push(MessagesReceived {
+                            messages: row_strings,
+                            id: message_id,
                         });
-                    }
+                    });
                 }
                 _ => (),
             };
@@ -107,11 +102,15 @@ fn App() -> impl IntoView {
                         when=move || socket_conn.get().is_some()
                         fallback=|| view! { "Getting connection" }
                     >
+                        "Connected to socket" <br/>
                         <For
                             each=move || all_messages_received.get()
                             key=|msg| msg.id
                             children=move |msg: MessagesReceived| {
-                                view! { <p>{msg.message}</p> }
+                                view! {
+                                    "msg id: " {msg.id}
+                                    {msg.messages.into_iter().map(|m| view! { <p>{m}</p> }).collect_view()}
+                                }
                             }
                         />
                     </Show>
@@ -119,9 +118,16 @@ fn App() -> impl IntoView {
             >
                 "Failed to establish connection"
                 <br/>
-                <p>{move || error_msg.get()}</p>
             </Show>
-
+            {move || if !error_msg.get().is_empty() {
+                view! {
+                    "Error: "
+                    <p>{move || error_msg.get()}</p>
+                    <br/>
+                }.into_any()
+            } else {
+                view! {}.into_any()
+            }}
             <button on:click=send_message_get_data>
                 "Say Hi"
             </button>

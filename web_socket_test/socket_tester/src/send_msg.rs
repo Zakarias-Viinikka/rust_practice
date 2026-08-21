@@ -21,7 +21,7 @@ pub fn prepare_message<T: Convert>(
         content,
     };
 
-    let msg_json = message_struct::serialize_message(&msg).map_err(|e| e.to_string());
+    let msg_json = message_struct::message_to_json_str(&msg).map_err(|e| e.to_string());
     msg_json
 }
 
