@@ -7,7 +7,9 @@ pub fn connect_to_socket(
     on_fail: impl Fn(String) + 'static,
     on_success: impl Fn(WebSocket) + 'static,
 ) -> Result<(), String> {
-    let ws = WebSocket::new("ws://127.0.0.1:3000/ws")
+    let ip = include_str!("ip.env").trim();
+
+    let ws = WebSocket::new(&format!("ws://{}:3000/ws", ip))
         .map_err(|e| e.as_string().unwrap_or_else(|| format!("{:?}", e)))?;
 
     let onmessage = Closure::<dyn FnMut(MessageEvent)>::new(move |e: MessageEvent| {
