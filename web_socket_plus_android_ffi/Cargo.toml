@@ -1,0 +1,11 @@
+[package]
+name = "web_socket_plus_android_ffi"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.9", features = ["ws"] }
+futures-util = "0.3.34"
+tokio = { version = "1.53.1", features = ["full"] }
+db_weebee = { path = "db_weebee" }
+shared_types = { path = "shared_types" }
