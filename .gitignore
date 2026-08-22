@@ -6,3 +6,4 @@ cargo_project_structure_test/target/
 
 **/target
 **/dist
+**/.env
