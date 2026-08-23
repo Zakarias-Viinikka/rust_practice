@@ -1,2 +1,5 @@
-[bindings.kotlin]
+[crate-roots]
+shared_types = "."
+
+[crates.shared_types.bindings.kotlin]
 package_name = "com.hiputer.shared_types"
