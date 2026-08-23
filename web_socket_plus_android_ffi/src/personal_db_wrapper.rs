@@ -14,7 +14,10 @@ pub fn new_liver() -> mascot::LiveForever {
 pub fn create_table_if_not_exist(liver: &LiveForever) -> Result<(), DbError> {
     let columns = socket_testing_table::column_definitions();
     let conn = &liver.db_conn;
-    black_magic::create_table(conn, TABLE_NAME, columns)
+    match black_magic::create_table(conn, TABLE_NAME, columns) {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
 }
 
 pub fn create_data_if_not_exist(liver: &LiveForever) -> Result<(), DbError> {

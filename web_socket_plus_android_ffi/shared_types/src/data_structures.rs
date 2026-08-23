@@ -9,9 +9,11 @@ pub struct CreateTableIn {
     pub columns: Vec<create_table::ColumnDef>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, uniffi::Record)]
 pub struct CreateTableOut {
-    pub result: Result<(), DbError>,
+    //this used to be Result<(), DbError>
+    // but uniffi didn't like that so i changed it to option
+    pub result: Option<DbError>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -19,14 +21,7 @@ pub struct ListTablesOut {
     pub table_names: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GetDataIn {
-    pub table_name: String,
-    pub arguments: Vec<SelectArgument>,
-    pub columns_to_read: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Enum)]
 pub enum SelectArgument {
     XEqualY { x: String, y: String },
     XNotEqualY { x: String, y: String },
@@ -37,6 +32,13 @@ pub enum SelectArgument {
     XLikeY { x: String, y: String },
     XInY { x: String, y: Vec<String> },
     All,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
+pub struct GetDataIn {
+    pub table_name: String,
+    pub arguments: Vec<SelectArgument>,
+    pub columns_to_read: Vec<String>,
 }
 
 impl SelectArgument {
@@ -77,13 +79,12 @@ impl SelectArgument {
     }
 }
 
-//let result: Vec<Vec<String>>
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct GetDataOut {
     pub rows: Vec<table_row::Row>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct GetDataOrderedIn {
     pub table_name: String,
     pub arguments: Vec<SelectArgument>,
@@ -91,21 +92,23 @@ pub struct GetDataOrderedIn {
     pub order_by: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct ColumnValue {
     pub column_name: String,
     pub value: table_row::Col,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct InsertDataIn {
     pub table_name: String,
     pub values: Vec<ColumnValue>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, uniffi::Record)]
 pub struct InsertDataOut {
-    pub result: Result<(), DbError>,
+    //this used to be Result<(), DbError>
+    // but uniffi didn't like that so i changed it to option
+    pub result: Option<DbError>,
 }
 
 // public_data_shapes.rs
@@ -114,7 +117,7 @@ pub struct DropTableIn {
     pub table_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct EditColInRowIn {
     pub table_name: String,
     pub row_id: String,
@@ -122,12 +125,12 @@ pub struct EditColInRowIn {
     pub new_value: table_row::Col,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CheckTableIn {
     pub table_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct TableColumnInfo {
     pub cid: i64,
     pub name: String,
@@ -137,18 +140,18 @@ pub struct TableColumnInfo {
     pub primary_key: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CheckTableOut {
     pub columns: Vec<TableColumnInfo>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct DeleteRowIn {
     pub table_name: String,
     pub row_id: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct SwapColumnsIn {
     pub table_name: String,
     pub row_id_1: String,
@@ -156,67 +159,67 @@ pub struct SwapColumnsIn {
     pub column: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CreateIndexIn {
     pub table_name: String,
     pub column_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CheckIndexIn {
     pub table_name: String,
     pub column_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CheckIndexOut {
     pub is_indexed: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct AddColumnIn {
     pub table_name: String,
     pub column: create_table::ColumnDef,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct ExportDatabaseIn {}
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct ExportDatabaseOut {
     pub data: Vec<u8>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct RemoveColumnIn {
     pub table_name: String,
     pub column_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct ExportTablesIn {
     pub table_names: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct TableExport {
     pub table_name: String,
     pub columns: Vec<TableColumnInfo>,
     pub rows: Vec<table_row::Row>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct ExportTablesOut {
     pub tables: Vec<TableExport>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CreateTableFromExportIn {
     pub table_name: String,
     pub table: TableExport,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, uniffi::Record)]
 pub struct CopyTableIn {
     pub source_table_name: String,
     pub new_table_name: String,

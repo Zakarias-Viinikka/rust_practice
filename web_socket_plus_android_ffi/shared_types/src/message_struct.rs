@@ -38,7 +38,7 @@ pub struct Response {
     pub request: Request,
     pub data: Base64Bytes,
 }
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, uniffi::Enum)]
 pub enum Request {
     CreateTable,
     ListTables,

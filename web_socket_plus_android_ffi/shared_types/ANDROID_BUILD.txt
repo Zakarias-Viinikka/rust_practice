@@ -1,0 +1,7 @@
+1. cargo install cargo-ndk
+
+2. make: 'cargo ndk --version' work
+
+3. rustup target add aarch64-linux-android x86_64-linux-android
+
+4. cargo ndk -o <android-app-path>/app/src/main/jniLibs -t arm64-v8a -t x86_64 build --release -p shared_types --features ffi

@@ -1,5 +1,6 @@
 use crate::create_sql_statements::*;
 
+use shared_types::byte_serialization::Convert;
 use shared_types::create_table::ColumnDef;
 use shared_types::data_structures::*;
 use shared_types::db_error::DbError;
@@ -9,14 +10,15 @@ pub fn create_table(
     conn: &rusqlite::Connection,
     table_name: &str,
     columns: Vec<ColumnDef>,
-) -> Result<(), DbError> {
+) -> Option<DbError> {
     if table_name.is_empty() {
-        return Err(DbError::IllegalInput("table_name is empty".to_string()));
+        return Some(DbError::IllegalInput("table_name is empty".to_string()));
     }
     let sql = generate_create_table_sql(table_name, &columns);
-    conn.execute(&sql, [])
-        .map_err(|e| DbError::SqlExecuteFail(format!("err: {}, sql: {}", e, sql)))?;
-    Ok(())
+    let result = conn
+        .execute(&sql, [])
+        .map_err(|e| DbError::SqlExecuteFail(format!("err: {}, sql: {}", e, sql)));
+    if result.is_ok() { None } else { result.err() }
 }
 
 pub fn list_tables(conn: &rusqlite::Connection) -> Result<Vec<String>, DbError> {
@@ -290,7 +292,10 @@ pub fn create_table_from_export(
         });
     }
 
-    create_table(conn, table_name, columns)?;
+    let result = create_table(conn, table_name, columns);
+    if let Some(err) = result {
+        return Err(err);
+    }
 
     for row in &table_export.rows {
         let mut values = Vec::new();

@@ -64,7 +64,10 @@ impl LiveForever {
         let input = unwrap_or_bail!(InsertDataIn::deserialize_wrapper(&data));
         let conn = self.conn();
         let result = black_magic::insert_into_table(conn, &input.table_name, input.values);
-        InsertDataOut { result }.serialize_wrapper()
+        InsertDataOut {
+            result: if let Err(e) = result { Some(e) } else { None },
+        }
+        .serialize_wrapper()
     }
 
     pub fn drop_table(&self, data: Vec<u8>) -> Vec<u8> {

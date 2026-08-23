@@ -10,8 +10,8 @@ use axum::{
 use db_weebee::mascot::LiveForever;
 use shared_types::message_struct;
 use std::sync::Arc;
-use web_socket_test::reply::{craft_response, send_message};
-use web_socket_test::{allowed_requests, personal_db_wrapper};
+use web_socket_plus_android_ffi::reply::{craft_response, send_message};
+use web_socket_plus_android_ffi::{allowed_requests, personal_db_wrapper};
 
 use std::net::SocketAddr;
 
