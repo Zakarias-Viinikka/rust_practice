@@ -1,7 +1,23 @@
-1. cargo install cargo-ndk
+# --- PRE-BUILD STEPS ---
+# 1. cargo install cargo-ndk
+# 2. rustup target add aarch64-linux-android
 
-2. make: 'cargo ndk --version' work
+# --- BUILD STEPS ---
+# 4. Build native library for physical device (arm64)
+cargo ndk -o ./output_for_android/jniLibs -t arm64-v8a build --release
 
-3. rustup target add aarch64-linux-android x86_64-linux-android
+# 5. Generate Kotlin glue code (using the local bin wrapper)
+cargo run --bin uniffi-bindgen -- generate \
+    --library ./output_for_android/jniLibs/arm64-v8a/libshared_types.so \
+    --language kotlin \
+    --out-dir ./output_for_android/kotlin
 
-4. cargo ndk -o <android-app-path>/app/src/main/jniLibs -t arm64-v8a -t x86_64 build --release -p shared_types --features ffi
+# --- MOVE STEPS (HARDCODED ABSOLUTE PATHS) ---
+
+# 6. Copy native binary to Android project
+mkdir -p /home/zakke/ProgStuff/android_practice/HiPuter/app/src/main/jniLibs
+cp -r /home/zakke/ProgStuff/rust_practice/web_socket_plus_android_ffi/shared_types/output_for_android/jniLibs/* /home/zakke/ProgStuff/android_practice/HiPuter/app/src/main/jniLibs/
+
+# 7. Copy Kotlin source to Android project
+mkdir -p /home/zakke/ProgStuff/android_practice/HiPuter/app/src/main/java/com/hiputer/shared_types/
+cp /home/zakke/ProgStuff/rust_practice/web_socket_plus_android_ffi/shared_types/output_for_android/kotlin/com/hiputer/shared_types/shared_types.kt /home/zakke/ProgStuff/android_practice/HiPuter/app/src/main/java/com/hiputer/shared_types/
