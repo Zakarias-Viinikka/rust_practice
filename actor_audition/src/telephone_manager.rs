@@ -1,44 +1,31 @@
-use crate::{
-    doers::PriorityLevel,
-    things_to_do::{Instructions, ThingToDo},
-};
+use crate::{doers::PriorityLevel, queue_manager::Queues, things_to_do::Instructions};
+use tokio::sync::mpsc;
 
 pub struct TelephoneManager {
-    telephone_receiver: tokio::sync::mpsc::Receiver<Instructions>,
-    normal_queue: Vec<ThingToDo>,
-    priority_queue: Vec<ThingToDo>,
+    telephone_rx: mpsc::Receiver<Instructions>,
 }
 
 impl TelephoneManager {
-    pub async fn create_telephone_manager(
-        telephone_receiver: tokio::sync::mpsc::Receiver<Instructions>,
+    pub fn create_telephone_manager(
+        telephone_rx: mpsc::Receiver<Instructions>,
+        queues: Queues,
+        wake_tx: mpsc::Sender<()>,
     ) {
-        let mut telephone_manager = TelephoneManager {
-            telephone_receiver,
-            normal_queue: Vec::new(),
-            priority_queue: Vec::new(),
-        };
-
-        let (tx, rx) = mpsc::channel(32);
+        let mut telephone_manager = TelephoneManager { telephone_rx };
 
         tokio::spawn(async move {
             loop {
-                let wait_for_call = telephone_manager.telephone_receiver.recv().await;
-                if let Some(instructions) = wait_for_call {
-                    if instructions.priority_level == PriorityLevel::Priority {
-                        telephone_manager
-                            .priority_queue
-                            .push(instructions.thing_to_do);
-                    } else {
-                        telephone_manager
-                            .normal_queue
-                            .push(instructions.thing_to_do);
-                    }
-                    telephone_manager.alert_queue_processor();
+                let Some(instructions) = telephone_manager.telephone_rx.recv().await else {
+                    return;
+                };
+
+                match instructions.priority_level {
+                    PriorityLevel::Important => queues.priority.lock().unwrap().push(instructions),
+                    PriorityLevel::Normal => queues.normal.lock().unwrap().push(instructions),
                 }
+
+                wake_tx.try_send(()).ok();
             }
         });
     }
-
-    fn process_queue(&mut self) {}
 }
