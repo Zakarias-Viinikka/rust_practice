@@ -1,0 +1,8 @@
+[package]
+name = "error_stuff"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+thiserror = "2"
+protocol = { git = "https://github.com/Zakarias-Viinikka/z_db" }

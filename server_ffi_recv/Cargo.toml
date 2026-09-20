@@ -1,0 +1,4 @@
+[workspace]
+resolver = "3"
+members = ["server", "server_protocol", "web_client", "error_stuff"]
+default-members = ["server"]
