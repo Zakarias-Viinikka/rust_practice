@@ -1,9 +1,19 @@
-/target
-refcell_and_gui/target/
-crdt_test/target/
-cli_test_program/target/
-cargo_project_structure_test/target/
-
-**/target
-**/dist
+# --- Your Custom Rules ---
+**/target/
+**/pkg/
+**/dist/
+**/node_modules/
 **/*.env
+**/.zed/
+**/.DS_Store
+**/Thumbs.db
+
+# --- Essential Android/Gradle Junk ---
+**/.gradle/
+**/build/
+**/local.properties
+**/.idea/
+**/*.iml
+.cxx/
+.externalNativeBuild/
+**/*ip.kt
