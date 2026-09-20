@@ -400,6 +400,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "error_stuff"
+version = "0.1.0"
+
+[[package]]
 name = "event-listener"
 version = "5.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -576,6 +580,18 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "gloo-timers"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "482ce8a491a501da4cd806bd190275363d674f2845005c6ddbd5d3e1dd54495d"
+dependencies = [
+ "futures-channel",
+ "futures-core",
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -804,15 +820,6 @@ checksum = "cb68373c0d6620ef8105e855e7745e18b0d00d3bdb07fb532e434244cdb9a714"
 dependencies = [
  "icu_normalizer",
  "icu_properties",
-]
-
-[[package]]
-name = "inbetween_man"
-version = "0.1.0"
-dependencies = [
- "futures",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
@@ -1159,6 +1166,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "tokio",
+ "wasm-bindgen-futures",
 ]
 
 [[package]]
@@ -1768,6 +1776,18 @@ checksum = "63eb08f80db903d3c42f64e60ebb3875e0305be502bdc064ec0a0eab42207f00"
 dependencies = [
  "server_fn_macro",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "server_talker"
+version = "0.1.0"
+dependencies = [
+ "error_stuff",
+ "futures",
+ "gloo-timers",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -2382,9 +2402,9 @@ version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
  "futures",
- "inbetween_man",
  "leptos",
  "popup",
+ "server_talker",
 ]
 
 [[package]]

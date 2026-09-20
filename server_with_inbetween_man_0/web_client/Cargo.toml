@@ -7,5 +7,5 @@ edition = "2024"
 console_error_panic_hook = "0.1.7"
 leptos = { version = "0.8.20", features = ["csr"] }
 futures = "0.3"
-inbetween_man = { path = "../inbetween_man" }
+server_talker = { path = "../server_talker" }
 popup = { git = "https://github.com/Zakarias-Viinikka/leptos_components", package = "popup" }

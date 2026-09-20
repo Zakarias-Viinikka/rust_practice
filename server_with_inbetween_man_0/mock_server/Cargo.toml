@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 axum = { version = "0.8.9", features = ["ws"] }
 tokio = { version = "1.53.1", features = ["full"] }
+wasm-bindgen-futures = "0.4.78"
