@@ -1,0 +1,4 @@
+[workspace]
+resolver = "3"
+members = ["inbetween_man", "web_client", "mock_server"]
+default-members = ["mock_server"]
