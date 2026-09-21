@@ -1,0 +1,12 @@
+[package]
+name = "router_for_responses_coming_to_client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+futures = "0.3"
+server_protocol = { path = "../server_protocol" }
+wasm-bindgen-futures = "0.4.78"
+wasm-bindgen = "0.2.127"
+web-sys = { version = "0.3.104", features = ["console"] }
+error_stuff = { path = "../error_stuff" }

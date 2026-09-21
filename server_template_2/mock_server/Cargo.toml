@@ -1,0 +1,10 @@
+[package]
+name = "mock_server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.9", features = ["ws"] }
+tokio = { version = "1.53.1", features = ["full"] }
+wasm-bindgen-futures = "0.4.78"
+server_protocol = { path = "../server_protocol" }

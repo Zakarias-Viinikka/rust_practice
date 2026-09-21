@@ -1,0 +1,4 @@
+[workspace]
+resolver = "3"
+members = ["server_talker", "test_web_client", "mock_server", "error_stuff", "server_protocol", "router_for_responses_coming_to_client"]
+default-members = ["mock_server"]
