@@ -80,8 +80,8 @@ pub async fn run_gui(queues: Queues, stats: Stats, settings: Settings) -> io::Re
             .block(Block::default().borders(Borders::ALL).title("Status"));
             frame.render_widget(header, chunks[0]);
 
-            let p = queues.priority.lock().unwrap().len();
-            let n = queues.normal.lock().unwrap().len();
+            let p = queues.priority_queue.lock().unwrap().len();
+            let n = queues.normal_queue.lock().unwrap().len();
             let queue_lines = vec![
                 Line::from(vec![
                     Span::styled(

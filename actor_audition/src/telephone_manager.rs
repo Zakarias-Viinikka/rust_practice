@@ -1,4 +1,4 @@
-use crate::{doers::PriorityLevel, queue_manager::Queues, things_to_do::Instructions};
+use crate::{queue_manager::Queues, things_to_do::Instructions};
 use tokio::sync::mpsc;
 
 pub struct TelephoneManager {
@@ -19,12 +19,9 @@ impl TelephoneManager {
                     return;
                 };
 
-                match instructions.priority_level {
-                    PriorityLevel::Important => queues.priority.lock().unwrap().push(instructions),
-                    PriorityLevel::Normal => queues.normal.lock().unwrap().push(instructions),
+                if let Err(e) = queues.add_to_queue(instructions, &wake_tx) {
+                    eprintln!("telephone_manager: {}", e);
                 }
-
-                wake_tx.try_send(()).ok();
             }
         });
     }

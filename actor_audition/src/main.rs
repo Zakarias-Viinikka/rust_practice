@@ -18,7 +18,7 @@ async fn main() -> std::io::Result<()> {
 
     let stats = Stats::new();
     let settings = Settings::new();
-    let queues = Queues::create_queue_manager(wake_rx, stats.clone(), settings.clone());
+    let queues = Queues::spawn_queue_manager(wake_rx, stats.clone(), settings.clone());
 
     TelephoneManager::create_telephone_manager(rx, queues.clone(), wake_tx);
 

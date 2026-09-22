@@ -3,7 +3,7 @@ use tokio::time::{Duration, sleep};
 
 use crate::doers::PriorityLevel;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ThingToDo {
     Thing1,
     Thing2,
@@ -17,25 +17,25 @@ pub struct Instructions {
     pub tx: oneshot::Sender<String>,
 }
 
-pub async fn do_thing(instructions: Instructions, delay: Duration) {
-    match instructions.thing_to_do {
-        ThingToDo::Thing1 => do_thing_1(instructions.tx, delay).await,
-        ThingToDo::Thing2 => do_thing_2(instructions.tx, delay).await,
-        ThingToDo::Thing3 => do_thing_3(instructions.tx, delay).await,
+pub async fn do_thing(thing_to_do: ThingToDo, delay: Duration) -> String {
+    match thing_to_do {
+        ThingToDo::Thing1 => do_thing_1(delay).await,
+        ThingToDo::Thing2 => do_thing_2(delay).await,
+        ThingToDo::Thing3 => do_thing_3(delay).await,
     }
 }
 
-pub async fn do_thing_1(tx: oneshot::Sender<String>, delay: Duration) {
+pub async fn do_thing_1(delay: Duration) -> String {
     sleep(delay).await;
-    tx.send("thing 1".to_string()).unwrap();
+    "thing 1".to_string()
 }
 
-pub async fn do_thing_2(tx: oneshot::Sender<String>, delay: Duration) {
+pub async fn do_thing_2(delay: Duration) -> String {
     sleep(delay).await;
-    tx.send("thing 2".to_string()).unwrap();
+    "thing 2".to_string()
 }
 
-pub async fn do_thing_3(tx: oneshot::Sender<String>, delay: Duration) {
+pub async fn do_thing_3(delay: Duration) -> String {
     sleep(delay).await;
-    tx.send("thing 3".to_string()).unwrap();
+    "thing 3".to_string()
 }
