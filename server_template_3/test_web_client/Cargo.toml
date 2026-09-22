@@ -1,0 +1,13 @@
+[package]
+name = "test_web_client"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+leptos = { version = "0.8.20", features = ["csr"] }
+futures = "0.3"
+server_talker = { path = "../server_talker" }
+server_protocol = { path = "../server_protocol" }
+router_for_responses_coming_to_client = { path = "../router_for_responses_coming_to_client" }
+popup = { git = "https://github.com/Zakarias-Viinikka/leptos_components", package = "popup" }
