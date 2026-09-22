@@ -33,18 +33,25 @@ impl Queues {
                 };
 
                 loop {
-                    let next = priority.lock().unwrap().pop();
+                    let next = {
+                        let mut p = priority.lock().unwrap();
+                        if p.is_empty() { None } else { Some(p.remove(0)) }
+                    };
                     let next = match next {
                         Some(instr) => Some(instr),
-                        None => normal.lock().unwrap().pop(),
+                        None => {
+                            let mut n = normal.lock().unwrap();
+                            if n.is_empty() { None } else { Some(n.remove(0)) }
+                        }
                     };
 
                     match next {
                         Some(instr) => {
                             let name = format!("{:?}", instr.thing_to_do);
+                            let received_at = instr.received_at;
                             let start = Instant::now();
                             do_thing(instr, settings.delay()).await;
-                            stats.record(name, start.elapsed());
+                            stats.record(name, received_at.elapsed(), start.elapsed());
                         }
                         None => break,
                     }

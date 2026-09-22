@@ -88,6 +88,7 @@ impl MakeAPhoneCall for Doer1 {
                     .send(Instructions {
                         thing_to_do: ThingToDo::Thing1,
                         priority_level,
+                        received_at: std::time::Instant::now(),
                         tx,
                     })
                     .await
@@ -109,6 +110,7 @@ impl MakeAPhoneCall for Doer2 {
                     .send(Instructions {
                         thing_to_do: ThingToDo::Thing2,
                         priority_level,
+                        received_at: std::time::Instant::now(),
                         tx,
                     })
                     .await
@@ -130,6 +132,7 @@ impl MakeAPhoneCall for Doer3 {
                     .send(Instructions {
                         thing_to_do: ThingToDo::Thing3,
                         priority_level,
+                        received_at: std::time::Instant::now(),
                         tx,
                     })
                     .await

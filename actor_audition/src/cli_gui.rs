@@ -26,7 +26,7 @@ pub struct Stats {
 pub struct FinishedTask {
     name: String,
     duration: Duration,
-    finished_at: String,
+    since_request: Duration,
 }
 
 impl Stats {
@@ -37,23 +37,15 @@ impl Stats {
         }
     }
 
-    pub fn record(&self, name: String, duration: Duration) {
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        let hh = (now / 3600) % 24;
-        let mm = (now / 60) % 60;
-        let ss = now % 60;
-
+    pub fn record(&self, name: String, since_request: Duration, duration: Duration) {
         let mut f = self.finished.lock().unwrap();
-        if f.len() >= 5 {
+        if f.len() >= 15 {
             f.pop_front();
         }
         f.push_back(FinishedTask {
             name,
             duration,
-            finished_at: format!("{:02}:{:02}:{:02}", hh, mm, ss),
+            since_request,
         });
         *self.total_processed.lock().unwrap() += 1;
     }
@@ -124,10 +116,10 @@ pub async fn run_gui(queues: Queues, stats: Stats, settings: Settings) -> io::Re
                         Style::default().fg(Color::DarkGray)
                     };
                     ListItem::new(format!(
-                        "{:<8}  {:>4}ms   finished at {}",
+                        "{:<8}  ran {:>4}ms   from request to finish {:>4}ms",
                         t.name,
                         t.duration.as_millis(),
-                        t.finished_at
+                        t.since_request.as_millis()
                     ))
                     .style(style)
                 })
@@ -135,7 +127,7 @@ pub async fn run_gui(queues: Queues, stats: Stats, settings: Settings) -> io::Re
             let list = List::new(items).block(
                 Block::default()
                     .borders(Borders::ALL)
-                    .title("Last 5 finished (newest first)"),
+                    .title("Last 15 finished (newest first)"),
             );
             frame.render_widget(list, chunks[2]);
 

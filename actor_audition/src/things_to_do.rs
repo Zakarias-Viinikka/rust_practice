@@ -13,6 +13,7 @@ pub enum ThingToDo {
 pub struct Instructions {
     pub thing_to_do: ThingToDo,
     pub priority_level: PriorityLevel,
+    pub received_at: std::time::Instant,
     pub tx: oneshot::Sender<String>,
 }
 
