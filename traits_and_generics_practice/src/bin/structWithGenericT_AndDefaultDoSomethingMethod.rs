@@ -4,11 +4,11 @@ mod practice;
 use std::fmt::Display;
 
 use num_traits::Num;
-use practice::structWithGenericT_AndDefaultDoSomethingMethod as swgtadsm;
+use practice::structWithGenericT_AndDefaultDoSomethingMethod;
 
 //cargo run -q
-use swgtadsm::PrintOrSomething;
-use swgtadsm::Struct;
+use structWithGenericT_AndDefaultDoSomethingMethod::PrintOrSomething;
+use structWithGenericT_AndDefaultDoSomethingMethod::Struct;
 fn main() {
     let x = Struct { value: 3 };
     x.printOrSomething();

@@ -1,0 +1,12 @@
+[package]
+name = "whatever_comes_before_kindergarden"
+version = "0.1.0"
+edition = "2024"
+default-run = "assoc_vs_generics"
+
+[dependencies]
+
+
+[[bin]]
+name = "assoc_vs_generics"
+path = "src/bin/assoc_vs_generic.rs"
