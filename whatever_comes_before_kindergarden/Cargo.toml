@@ -2,11 +2,34 @@
 name = "whatever_comes_before_kindergarden"
 version = "0.1.0"
 edition = "2024"
-default-run = "assoc_vs_generics"
+default-run = "example5"
 
 [dependencies]
+protocol = {git = "https://github.com/Zakarias-Viinikka/z_db", branch = "main"}
 
 
 [[bin]]
 name = "assoc_vs_generics"
 path = "src/bin/assoc_vs_generic.rs"
+
+
+[[bin]]
+name = "part2"
+path = "src/bin/part2.rs"
+
+[[bin]]
+name = "both_bins_combined"
+path = "src/bin/both_bins_combined.rs"
+
+[[bin]]
+name = "example3_works"
+path = "src/bin/example3_works.rs"
+
+[[bin]]
+name = "example4_works"
+path = "src/bin/example4_works.rs"
+
+
+[[bin]]
+name = "example5"
+path = "src/bin/example5.rs"
