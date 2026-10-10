@@ -391,6 +391,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "schema_helper"
+version = "0.1.0"
+dependencies = [
+ "protocol",
+]
+
+[[package]]
 name = "scroll"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -740,13 +747,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "998d2c24ec099a87daf9467808859f9d82b61f1d9c9701251aea037f514eae0e"
 dependencies = [
  "nom",
-]
-
-[[package]]
-name = "whatever_comes_before_kindergarden"
-version = "0.1.0"
-dependencies = [
- "protocol",
 ]
 
 [[package]]

@@ -1,8 +1,8 @@
 [package]
-name = "whatever_comes_before_kindergarden"
+name = "schema_helper"
 version = "0.1.0"
 edition = "2024"
-default-run = "example5"
+default-run = "schema_helper"
 
 [dependencies]
 protocol = {git = "https://github.com/Zakarias-Viinikka/z_db", branch = "main"}
@@ -28,8 +28,3 @@ path = "src/bin/example3_works.rs"
 [[bin]]
 name = "example4_works"
 path = "src/bin/example4_works.rs"
-
-
-[[bin]]
-name = "example5"
-path = "src/bin/example5.rs"
