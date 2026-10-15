@@ -1,4 +1,13 @@
 [workspace]
 resolver = "3"
-members = ["server_talker", "test_web_client", "server", "error_stuff", "server_protocol", "router_for_responses_coming_to_client", "server_db_schema"]
-default-members = ["server"]
+members = [
+    "shared/error_stuff",
+    "shared/server_protocol",
+    "server_side/server",
+    "server_side/server_db_schema",
+    "server_side/queue",
+    "client_side/how_to_talk_to_server",
+    "client_side/incoming_responses",
+    "client_side/test_web_client",
+]
+default-members = ["server_side/server"]

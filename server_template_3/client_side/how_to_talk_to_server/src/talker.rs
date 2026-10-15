@@ -1,18 +1,15 @@
+use crate::helper::{
+    AllRtx, attach_events, connect_to_socket, decode_response, forward_response,
+    something_went_wrong, spawn_server_talker,
+};
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender, unbounded};
 use server_protocol::{Message, Response};
 use wasm_bindgen::prelude::*;
 use web_sys::{MessageEvent, WebSocket};
 
-mod helper;
-
-use helper::{
-    AllRtx, attach_events, connect_to_socket, decode_response, forward_response,
-    something_went_wrong, spawn_server_talker,
-};
-
 pub struct ServerTalker {
-    ws: WebSocket,
-    server_request_to_make_rx: UnboundedReceiver<Message>,
+    pub(crate) ws: WebSocket,
+    pub(crate) server_request_to_make_rx: UnboundedReceiver<Message>,
 }
 
 pub struct ServerTalkerHandles {

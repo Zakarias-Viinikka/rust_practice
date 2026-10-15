@@ -3,11 +3,11 @@ use futures::channel::mpsc::{UnboundedSender, unbounded};
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use popup::popup::{PopupContainer, create_popup};
-use router_for_responses_coming_to_client::ResponseRouter;
+use incoming_responses::ResponseRouter;
 use server_protocol::{
     Base64Bytes, Convert, DbError, GetEntireTableOut, Message, Request, ok_serialized,
 };
-use server_talker::ServerTalker;
+use how_to_talk_to_server::ServerTalker;
 
 #[derive(Clone, Copy, PartialEq)]
 enum ConnectionState {

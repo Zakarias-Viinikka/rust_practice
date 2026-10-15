@@ -1,5 +1,5 @@
 [package]
-name = "server_talker"
+name = "how_to_talk_to_server"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,8 +7,8 @@ edition = "2024"
 futures = "0.3"
 wasm-bindgen = "0.2.127"
 web-sys = { version = "0.3.104", features = ["WebSocket", "MessageEvent", "console"] }
-error_stuff = { path = "../error_stuff" }
+error_stuff = { path = "../../shared/error_stuff" }
 wasm-bindgen-futures = "0.4.78"
 gloo-timers = { version = "0.4.0", features = ["futures"] }
-server_protocol = { path = "../server_protocol" }
+server_protocol = { path = "../../shared/server_protocol" }
 serde_json = "1"

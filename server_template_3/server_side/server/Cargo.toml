@@ -1,0 +1,15 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = { version = "0.8.9", features = ["ws"] }
+tokio = { version = "1.53.1", features = ["full"] }
+#db_wrapper = { git = "https://github.com/Zakarias-Viinikka/z_db", default-features = false, features = ["native"] }
+db_wrapper = { path = "/home/zakke/ProgStuff/z_db/db_wrapper", default-features = false, features = ["native"] }
+#protocol = { git = "https://github.com/Zakarias-Viinikka/z_db" }
+protocol = { path = "/home/zakke/ProgStuff/z_db/protocol" }
+server_protocol = { path = "../../shared/server_protocol" }
+server_db_schema = { path = "../server_db_schema" }
+queue = { path = "../queue" }
