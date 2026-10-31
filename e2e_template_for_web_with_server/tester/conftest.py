@@ -13,7 +13,7 @@ def browser():
         b.close()
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def page(browser):
     context = browser.new_context(no_viewport=True)
     pg = context.new_page()
