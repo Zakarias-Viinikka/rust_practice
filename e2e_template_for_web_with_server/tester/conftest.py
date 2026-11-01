@@ -17,8 +17,43 @@ def browser():
 def page(browser):
     context = browser.new_context(no_viewport=True)
     pg = context.new_page()
+    pg.js_errors = []
+    def on_pageerror(e):
+        pg.js_errors.append(str(e))
+    pg.on("pageerror", on_pageerror)
+    pg.on("console", lambda m: print(f"### CONSOLE {m.type}: {m.text}"))
+    if os.environ.get("HEADLESS", "0") != "1":
+        time.sleep(1)
     yield pg
     context.close()
+
+
+@pytest.fixture(autouse=True)
+def _no_js_errors_per_test(page, request):
+    """pytest hides stdout of passing tests, so a JS panic during a passing
+    test is invisible unless we fail that test. This does."""
+    start = len(page.js_errors)
+    yield
+    new = page.js_errors[start:]
+    if new:
+        raise AssertionError(f"JS errors during {request.node.name}: {new}")
+
+
+@pytest.fixture(scope="session")
+def web_app(page, web_app_url):
+    """Lands on /custom_port_setting_page, sets the server port, navigates
+    to / as an SPA change, and returns the page ready for tests. No page
+    reload from here on."""
+    from playwright.sync_api import expect
+
+    page.goto(web_app_url)
+    expect(page.locator("[data-testid='custom-port-setting-page']")).to_be_visible(
+        timeout=2000
+    )
+    port = int(os.environ["SERVER_PORT"])
+    page.evaluate(f"window.dispatchEvent(new CustomEvent('set_port', {{ detail: {port} }}))")
+    page.evaluate("window.dispatchEvent(new CustomEvent('navigate', { detail: '/' }))")
+    return page
 
 
 @pytest.fixture(scope="session")

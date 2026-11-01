@@ -60,6 +60,10 @@ Then kills the server, aborts the static serve, exits with pytest's code.
 
 ## The tester
 
+**One window per session, not one per test.** The `page` fixture is session-scoped so a run opens one browser window and every test runs in it.
+
+**The venv is prepended by `local_cargo.sh`, not activated.** `local_cargo.sh` does `export PATH="$HERE/.venv/bin:$PATH"`. Do not `source .venv/bin/activate` in this folder — a copied venv's `activate` script still points at the original folder, so activating it wires pytest to the wrong Python and the wrong Playwright. Symptoms: `TargetClosedError` mid-test, headed flakiness. `c r` handles the PATH.
+
 `tester/conftest.py` fixtures:
 
 - `browser` — Chromium via Playwright, maximized. Headless if `HEADLESS=1`.

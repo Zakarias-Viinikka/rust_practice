@@ -3,21 +3,9 @@ use crate::{tester_can_clear_message, tester_can_set_message};
 use leptos::prelude::*;
 
 fn server_websocket_url() -> String {
-    let port = read_server_port_from_url().unwrap_or(3000);
+    let port = crate::server_port::get_port()
+        .expect("AppMain mounted without a server port set; see GOTCHAS.md");
     format!("ws://127.0.0.1:{}/ws", port)
-}
-
-fn read_server_port_from_url() -> Option<u16> {
-    let window = web_sys::window()?;
-    let search = window.location().search().ok()?;
-    let trimmed = search.strip_prefix('?')?;
-    for pair in trimmed.split('&') {
-        let (key, value) = pair.split_once('=')?;
-        if key == "server_port" {
-            return value.parse().ok();
-        }
-    }
-    None
 }
 
 #[component]

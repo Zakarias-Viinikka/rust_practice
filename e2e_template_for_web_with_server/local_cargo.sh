@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -e
 
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PATH="$HERE/.venv/bin:$PATH"
+
 if [ "$1" = "run" ] || [ "$1" = "r" ]; then
     shift
     if [ "$1" = "r" ] || [ "$1" = "release" ] || [ "$1" = "--release" ]; then
