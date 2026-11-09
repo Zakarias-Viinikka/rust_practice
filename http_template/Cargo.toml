@@ -1,0 +1,4 @@
+[workspace]
+resolver = "3"
+members = ["cli_that_tests_the_server", "mock_server", "error_stuff"]
+default-members = ["mock_server"]
